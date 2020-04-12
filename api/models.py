@@ -3,12 +3,12 @@ from django.contrib.postgres.fields import ArrayField
 
 class DailyOb(models.Model):
     date = models.DateField()
-    max_temp = models.DecimalField()
-    min_temp = models.DecimalField()
-    atob_temp = models.DecimalField()
-    precip = models.DecimalField()
-    snowfall = model.DecimalField()
-    snowdepth = model.DecimalField()
+    max_temp = models.DecimalField(max_digits=8, decimal_places=1)
+    min_temp = models.DecimalField(max_digits=8, decimal_places=1)
+    atob_temp = models.DecimalField(max_digits=8, decimal_places=1)
+    precip = models.DecimalField(max_digits=8, decimal_places=2)
+    snowfall = models.DecimalField(max_digits=8, decimal_places=1)
+    snowdepth = models.DecimalField(max_digits=8, decimal_places=1)
 
 class MonthlyOb(models.Model):
     # meta
@@ -23,34 +23,34 @@ class MonthlyOb(models.Model):
     # cdd = cooling degree days
 
     # temp fields
-    max_temp = DecimalField()
+    max_temp = models.DecimalField(max_digits=8, decimal_places=1)
     max_temp_dates = ArrayField(
         ArrayField(models.DateField())
     )
-    max_temp_avg = models.DecimalField()
+    max_temp_avg = models.DecimalField(max_digits=8, decimal_places=1)
     max_temp_grtr90_count = models.IntegerField()
     max_temp_less32_count = models.IntegerField()
 
-    min_temp = DecimalField()
+    min_temp = models.DecimalField(max_digits=8, decimal_places=1)
     min_temp_dates = ArrayField(
         ArrayField(models.DateField())
     )
-    min_temp_avg = models.DecimalField()
+    min_temp_avg = models.DecimalField(max_digits=8, decimal_places=1)
     min_temp_less32_count = models.IntegerField()
     min_temp_less0_count = models.IntegerField()
 
-    avg_temp = models.DecimalField()
-    avg_dfn = models.DecimalField()
+    avg_temp = models.DecimalField(max_digits=8, decimal_places=1)
+    avg_dfn = models.DecimalField(max_digits=8, decimal_places=1)
 
     hdd_count = models.IntegerField()
     cdd_count = models.IntegerField()
 
     # precip fields
-    precip = models.DecimalField()
-    precip_todate = models.DecimalField()
-    precip_todate_dfn = models.DecimalField()
+    precip = models.DecimalField(max_digits=8, decimal_places=2)
+    precip_todate = models.DecimalField(max_digits=8, decimal_places=2)
+    precip_todate_dfn = models.DecimalField(max_digits=8, decimal_places=2)
     
-    grtst_precip = models.DecimalField()
+    grtst_precip = models.DecimalField(max_digits=8, decimal_places=2)
     grtst_precip_dates = ArrayField(
         ArrayField(models.DateField())
     )
@@ -61,12 +61,12 @@ class MonthlyOb(models.Model):
     precip_grtr100 = models.IntegerField()
 
     # snowfall and snowdepth fields
-    sf = models.DecimalField()
+    sf = models.DecimalField(max_digits=8, decimal_places=1)
 
-    sf_todate = models.DecimalField()
-    sf_todate_dfn = models.DecimalField()
+    sf_todate = models.DecimalField(max_digits=8, decimal_places=1)
+    sf_todate_dfn = models.DecimalField(max_digits=8, decimal_places=1)
 
-    grtst_sf = models.DecimalField()
+    grtst_sf = models.DecimalField(max_digits=8, decimal_places=1)
     grtst_sf_dates = ArrayField(
         ArrayField(models.DateField())
     )
@@ -76,11 +76,11 @@ class MonthlyOb(models.Model):
     sf_grtr500 = models.IntegerField()
     sf_grtr1000 = models.IntegerField()
 
-    grtst_sd = models.DecimalField()
+    grtst_sd = models.DecimalField(max_digits=8, decimal_places=1)
     grtst_sd_dates = ArrayField(
         ArrayField(models.DateField())
     )
-    sd_grtrT models.IntegerField()
+    sd_grtrT = models.IntegerField()
     sd_grtr50 = models.IntegerField() # 50 = 0.50"
     sd_grtr100 = models.IntegerField() # 100 = 1.00"
     sd_grtr500 = models.IntegerField()
@@ -97,23 +97,20 @@ class SunsetLakeIceInIceOut(models.Model):
 class SnowSeason(models.Model):
     date = models.DateField()
     season = models.CharField(max_length=16)
-    oct = models.DecimalField()
-    nov = models.DecimalField()
-    dec = models.DecimalField()
-    jan = models.DecimalField()
-    feb = models.DecimalField()
-    mar = models.DecimalField()
-    apr = models.DecimalField()
-    may = models.DecimalField()
+    oct = models.DecimalField(max_digits=8, decimal_places=1)
+    nov = models.DecimalField(max_digits=8, decimal_places=1)
+    dec = models.DecimalField(max_digits=8, decimal_places=1)
+    jan = models.DecimalField(max_digits=8, decimal_places=1)
+    feb = models.DecimalField(max_digits=8, decimal_places=1)
+    mar = models.DecimalField(max_digits=8, decimal_places=1)
+    apr = models.DecimalField(max_digits=8, decimal_places=1)
+    may = models.DecimalField(max_digits=8, decimal_places=1)
 
 
 class PeakFoliage(models.Model):
     date = models.DateField()
 
 
-# class Events(models.Model):
-#     type = models.CharField(max_length=16)
-#     start = models.DateField()
-#     end = models.DateField()
-#     desc = models.TextField()
-
+class Photo(models.Model):
+    url = models.CharField(max_length=256)
+    caption = models.CharField(max_length=256)
