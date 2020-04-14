@@ -1,0 +1,41 @@
+{% extends "layouts/main.html" %}
+{% load static %}
+
+{% block content %}
+
+<div id="" class="container" style="min-height: 650px;">
+    <h3 style="text-align: center;">Precipitation Summary</h3>
+    <table class="table-striped" style="width: 100%;">
+        <tr>
+            <th>Year</th>
+            <th>Jan</th>
+            <th>Feb</th>
+            <th>Mar</th>
+            <th>Apr</th>
+            <th>May</th>
+            <th>Jun</th>
+            <th>Jul</th>
+            <th>Aug</th>
+            <th>Sep</th>
+            <th>Oct</th>
+            <th>Nov</th>
+            <th>Dec</th>
+        </tr>
+
+        {% for i, summary in enumerate(summaries) %}
+            {% if summary.month == 1 %}
+                <tr>
+                    <td>{{ summary.year }}</td>
+            {% endif %}
+            
+            <td>{{ summary.precip }}</td>
+                    
+            {% if summary.month == 12 or i == len(summaries)-1 %}
+                </tr>
+            {% endif %}
+        {% endfor %}
+
+    </table>
+</div>
+
+{% endblock %}

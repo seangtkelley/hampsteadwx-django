@@ -1,0 +1,30 @@
+{% extends "layouts/main.html" %}
+{% load static %}
+
+{% block content %}
+<div id="" class="container" style="min-height: 650px;">
+    <h3 style="text-align: center;">Peak Foliage</h3>
+    <table class="table-bordered table-hover" style="width: 100%;">
+        <tbody>
+            <tr>
+                <th style="text-align: center;">
+                    <h4><b>Year<b></h4>
+                </th>
+                <th style="text-align: center;">
+                    <h4><b>Date<b></h4>
+                </th>
+            </tr>
+            {% for summary in summaries %}
+                <tr>
+                    <th style="text-align: center;">
+                        <h4>{{ summary.date.year }}</h4>
+                    </th>
+                    <th style="text-align: center;">
+                        <h4>{{ summary.date.strftime('%b %d, %Y') }}</h4>
+                    </th>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
