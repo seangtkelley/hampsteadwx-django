@@ -5,10 +5,10 @@ def index(request):
     return render(request, 'index.html', { 'title': "Home" })
 
 def info(request):
-    return render(request, 'index.html', { 'title': "Home" })
+    return render(request, 'info.html', { 'title': "Info" })
 
 def normals(request):
-    return render(request, 'index.html', { 'title': "Home" })
+    return render(request, 'normals.html', { 'title': "Normals" })
 
 
 def photos_home(request):
