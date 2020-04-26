@@ -12,7 +12,7 @@ def normals(request):
 
 
 def photos_home(request):
-    return render(request, 'index.html', { 'title': "Home" })
+    return render(request, 'photos/home.html', { 'title': "Photos" })
 
 def photos_submit(request):
     if request.method == 'POST':
@@ -23,7 +23,7 @@ def photos_submit(request):
         # display form
         pass
 
-    return render(request, 'index.html', { 'title': "Home" })
+    return render(request, 'photos/submit.html', { 'title': "Submit Photos" })
 
 
 def summaries_monthly_submit(request):
