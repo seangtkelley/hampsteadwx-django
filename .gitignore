@@ -3,6 +3,8 @@ node_modules/
 db.sqlite3
 *.save
 .idea/
+.vscode/
+
 settings_secret.py
 static/
 \.ipynb_checkpoints/
