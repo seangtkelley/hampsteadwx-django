@@ -2,5 +2,71 @@
 {% load static %}
 
 {% block content %}
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<script>
+    $(document).ready(function () {
+        google.charts.load('current', { packages: ['corechart', 'bar'] });
+        google.charts.setOnLoadCallback(drawChart);
 
+        function drawChart() {
+            var dataTable = new google.visualization.DataTable();
+            dataTable.addColumn('string', 'Month');
+            dataTable.addColumn('number', 'Total Snowfall (in.)');
+            dataTable.addColumn({ type: 'string', role: 'annotation' });
+            dataTable.addColumn({ 'type': 'string', 'role': 'tooltip', 'p': { 'html': true } });
+
+            dataTable.addRows([
+                {% for abbr, name in zip(month_abbrs, month_names) %}
+                    [
+                        '{{ name }}',
+                        {% if getattr(summary, abbr, None) == -77 || getattr(summary, abbr, None) < 0.5 %}
+                            0.5
+                        {% else %}
+                            {{ getattr(summary, abbr, None) }}
+                        {% endif %}
+                        ,
+                        {% if getattr(summary, abbr, None) == -77 %}
+                            'Trace'
+                        {% else %}
+                            '{{ getattr(summary, abbr, None) }}'
+                        {% endif %}
+                        ,
+                        '<div style="margin: 5px;\">
+                            <h4 style="border-bottom: 1px solid grey;">{{ name }}</h4>
+                            {% if getattr(summary, abbr, None) == -77 %}
+                                Trace
+                            {% else %}
+                                {{ getattr(summary, abbr, None) }}
+                            {% endif %}
+                        </div>'
+                    ],
+                {% endfor %}
+            ]);
+
+            var options = {
+                hAxis: {
+                    title: 'Month'
+                },
+                vAxis: {
+                    title: 'Total Snowfall (in.)'
+                },
+                legend: { position: 'none' },
+                bars: 'vertical',
+                tooltip: { isHtml: true }
+            };
+
+            var chart = new google.visualization.ColumnChart(document.getElementById('chart_div')).draw(dataTable, options);
+        }
+
+        $(window).resize(function () {
+            drawChart();
+        });
+    });
+</script>
+<div id="" class="container" style="min-height: 650px;">
+    <h3 style="text-align: center;">Snow Season Summaries</h3>
+    <h4 style="text-align: center;">1990-1991 to 2002-2003 data are from Mr. Maurice Randall, Hampstead Town Historian
+    </h4>
+    <div id="chart_div" style="height: 500px;"></div>
+</div>
 {% endblock %}
