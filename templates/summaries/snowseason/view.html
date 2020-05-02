@@ -1,5 +1,6 @@
 {% extends "layouts/main.html" %}
 {% load static %}
+{% load custom_tags %}
 
 {% block content %}
 <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
@@ -16,14 +17,8 @@
 
             dataTable.addRows([
 
-                {% for i, summary in enumerate(summaries) %}
-                    ['{{ summary.season }}', '{{ summary.total }}', '{{ summary.total }}'
-
-                    {% if i == len(summaries)-1 %}
-                        ]
-                    {% else %}
-                        ],
-                    {% endif %}
+                {% for summary in summaries %}
+                    ['{{ summary.season }}', '{{ summary.total }}', '{{ summary.total }}' ],
                 {% endfor %}
 
             ]);
@@ -68,6 +63,6 @@
     <h4 style="text-align: center;">1990-1991 to 2002-2003 data are from Mr. Maurice Randall, Hampstead Town
         Historian</h4>
     <div style="text-align: center;">Click on a bar to see the month graph.</div>
-    <div id="chart_div" style="height: {{ len(summaries)*25 }}"></div>
+    <div id="chart_div" style="height: {{ summaries|length|multiply:25 }}"></div>
 </div>
 {% endblock %}

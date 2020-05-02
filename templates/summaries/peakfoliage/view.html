@@ -20,7 +20,7 @@
                         <h4>{{ summary.date.year }}</h4>
                     </th>
                     <th style="text-align: center;">
-                        <h4>{{ summary.date.strftime('%b %d, %Y') }}</h4>
+                        <h4>{{ summary.date|date:"M j, Y" }}</h4>
                     </th>
             </tr>
             {% endfor %}

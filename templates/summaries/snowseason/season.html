@@ -1,5 +1,6 @@
 {% extends "layouts/main.html" %}
 {% load static %}
+{% load custom_tags %}
 
 {% block content %}
 <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
@@ -16,30 +17,33 @@
             dataTable.addColumn({ 'type': 'string', 'role': 'tooltip', 'p': { 'html': true } });
 
             dataTable.addRows([
-                {% for abbr, name in zip(month_abbrs, month_names) %}
-                    [
-                        '{{ name }}',
-                        {% if getattr(summary, abbr, None) == -77 || getattr(summary, abbr, None) < 0.5 %}
-                            0.5
-                        {% else %}
-                            {{ getattr(summary, abbr, None) }}
-                        {% endif %}
-                        ,
-                        {% if getattr(summary, abbr, None) == -77 %}
-                            'Trace'
-                        {% else %}
-                            '{{ getattr(summary, abbr, None) }}'
-                        {% endif %}
-                        ,
-                        '<div style="margin: 5px;\">
-                            <h4 style="border-bottom: 1px solid grey;">{{ name }}</h4>
-                            {% if getattr(summary, abbr, None) == -77 %}
-                                Trace
+                {% for abbr, name in month_abbrs|zip:month_names  %}
+                    {% with val=summary|getattribute:abbr %}
+                        [
+                            
+                            '{{ name }}',
+                            {% if val == -77 or val < 0.5 %}
+                                0.5
                             {% else %}
-                                {{ getattr(summary, abbr, None) }}
+                                {{ val }}
                             {% endif %}
-                        </div>'
-                    ],
+                            ,
+                            {% if val == -77 %}
+                                'Trace'
+                            {% else %}
+                                '{{ val }}'
+                            {% endif %}
+                            ,
+                            '<div style="margin: 5px;">
+                                <h4 style="border-bottom: 1px solid grey;">{{ name }}</h4>
+                                {% if val == -77 %}
+                                    Trace
+                                {% else %}
+                                    {{ val }}
+                                {% endif %}
+                            </div>'
+                        ],
+                    {% endwith %}
                 {% endfor %}
             ]);
 

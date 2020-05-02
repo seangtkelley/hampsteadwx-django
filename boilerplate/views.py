@@ -80,11 +80,11 @@ def summaries_annual_html(request):
 def summaries_snowseason_view(request):
     return render(request, 'summaries/snowseason/view.html', { 'title': "Snow Season" })
 
-def summaries_snowseason_season(request):
+def summaries_snowseason_season(request, season):
     month_names = ['October', 'November', 'December', 'January', 'February', 'March', 'April', 'May']
     month_abbrs = ['oct', 'nov', 'dec', 'jan', 'feb', 'mar', 'apr', 'may']
     return render(request, 'summaries/snowseason/season.html', { 
-        'title': "<Season> Snow Season",
+        'title': f"{season} Snow Season",
         'month_names': month_names,
         'month_abbrs': month_abbrs
         })

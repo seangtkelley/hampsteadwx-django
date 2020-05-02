@@ -1,6 +1,76 @@
 {% extends "layouts/main.html" %}
 {% load static %}
+{% load custom_tags %}
 
 {% block content %}
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<script>
+    $(document).ready(function () {
+        google.charts.load('current', { 'packages': ['timeline'] });
+        google.charts.setOnLoadCallback(drawChart);
+        function drawChart() {
+            var container = document.getElementById('timeline');
+            var chart = new google.visualization.Timeline(container);
+            var dataTable = new google.visualization.DataTable();
 
+            dataTable.addColumn({ type: 'string', id: 'Year' });
+            dataTable.addColumn({ type: 'date', id: 'Start' });
+            dataTable.addColumn({ type: 'date', id: 'End' });
+            dataTable.addColumn({ type: 'string', role: 'tooltip', 'p': { 'html': true } });
+            dataTable.addRows([
+
+                {% for summary in summaries %}
+                    [
+                        
+                        '{{ summary.season }}',
+                        // using only year 0 and 1 in order to compare durations
+                        new Date(0, {{ summary.icein_date|date:"n" }}-1, {{ summary.icein_date|date:"j" }}),
+                        new Date({{ summary.iceout_date|date:"Y" }}-{{ summary.icein_date|date:"Y" }}, {{ summary.iceout_date|date:"n" }}-1, {{ summary.icein_date|date:"j" }}),
+                        '<div style="margin: 5px;">
+                            <h4 style="border-bottom: 1px solid grey;">{{ summary.season }}</h4>
+                            {{ summary.icein_date|date:"M j, Y" }} - {{ summary.iceout_date|date:"M j, Y" }}
+                            <br>
+                            <b>Duration:</b> {{ summary.duration }}
+                        </div>'
+                    
+                    ],
+                {% endfor %}
+
+            ]);
+
+            var options = {
+                hAxis: {
+                    format: 'MMM dd'
+                },
+                tooltip: { isHtml: true },
+                timeline: { singleColor: '#3367d6' },
+                chartArea: { 'width': '75%', 'height': '90%' }
+            };
+
+            var view = new google.visualization.DataView(dataTable);
+            view.setColumns([0, 1, 2]);
+
+            chart.draw(view, options);
+
+            function myHandler(e) {
+                if (e.row != null) {
+                    $(".google-visualization-tooltip").html(dataTable.getValue(e.row, 3)).css({
+                        width: "auto",
+                        height: "auto"
+                    });
+                }
+            }
+
+            google.visualization.events.addListener(chart, 'onmouseover', myHandler);
+        }
+
+        $(window).resize(function () {
+            drawChart();
+        });
+    });
+</script>
+<div id="" class="container" style="min-height: 650px;">
+    <h3 style="text-align: center;">Sunset Lake Ice In/Ice Out</h3>
+    <div id="timeline" style="height: {{ summaries|length|multiply:25 }}"></div>
+</div>
 {% endblock %}
