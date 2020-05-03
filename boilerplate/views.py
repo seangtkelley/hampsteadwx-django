@@ -40,7 +40,7 @@ def summaries_monthly_submit(request):
 def summaries_monthly_home(request):
     return render(request, 'summaries/monthly/view.html', { 'title': "View Monthly Summary" })
 
-def summaries_monthly_view(request):
+def summaries_monthly_view(request, year, month):
     if request.method == 'POST':
         # edit remarks
         pass
@@ -51,29 +51,29 @@ def summaries_monthly_view(request):
 
     return render(request, 'summaries/monthly/view.html', { 'title': "\%b \%d Monthly Summary" })
 
-def summaries_monthly_text(request):
+def summaries_monthly_text(request, year, month):
     return render(request, 'summaries/monthly/text.html', { 'title': "\%b \%d Monthly Summary" })
 
-def summaries_monthly_csv(request):
+def summaries_monthly_csv(request, year, month):
     return render(request, 'index.html', { 'title': "Home" })
 
-def summaries_monthly_html(request):
+def summaries_monthly_html(request, year, month):
     return render(request, 'index.html', { 'title': "Home" })
 
 
 def summaries_annual_home(request):
     return render(request, 'summaries/annual/view.html', { 'title': "View Annual Summary" })
 
-def summaries_annual_view(request):
+def summaries_annual_view(request, year):
     return render(request, 'summaries/annual/view.html', { 'title': "\%d Annual Summary" })
 
-def summaries_annual_text(request):
+def summaries_annual_text(request, year):
     return render(request, 'summaries/annual/text.html', { 'title': "\%d Annual Summary" })
 
-def summaries_annual_table(request):
+def summaries_annual_table(request, year):
     return render(request, 'summaries/annual/table.html', { 'title': "\%d Annual Summary" })
 
-def summaries_annual_html(request):
+def summaries_annual_html(request, year):
     return render(request, 'index.html', { 'title': "Home" })
 
 
