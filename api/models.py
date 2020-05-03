@@ -12,7 +12,7 @@ class DailyOb(models.Model):
 
 class MonthlyOb(models.Model):
     # meta
-    date = models.DateField()
+    date = models.DateField() # day is always set to 1
     remarks = models.TextField()
     csv_filepath = models.CharField(max_length=512)
 
