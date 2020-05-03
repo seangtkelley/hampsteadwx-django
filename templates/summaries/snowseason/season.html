@@ -22,25 +22,11 @@
                         [
                             
                             '{{ name }}',
-                            {% if val == -77 or val < 0.5 %}
-                                0.5
-                            {% else %}
-                                {{ val }}
-                            {% endif %}
-                            ,
-                            {% if val == -77 %}
-                                'Trace'
-                            {% else %}
-                                '{{ val }}'
-                            {% endif %}
-                            ,
+                            {{ val|format_trace:'dec' }},
+                            '{{ val|format_trace:'str' }}',
                             '<div style="margin: 5px;">
                                 <h4 style="border-bottom: 1px solid grey;">{{ name }}</h4>
-                                {% if val == -77 %}
-                                    Trace
-                                {% else %}
-                                    {{ val }}
-                                {% endif %}
+                                {{ val|format_trace:'str' }}
                             </div>'
                         ],
                     {% endwith %}

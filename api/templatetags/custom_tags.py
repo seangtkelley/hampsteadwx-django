@@ -18,12 +18,25 @@ def getattribute(value, arg):
     else:
         return None
 
-
 @register.filter(name='zip')
-def zip_lists(a, b):
-    return zip(a, b)
+def zip_lists(value, arg):
+    return zip(value, arg)
 
 
 @register.filter
 def multiply(value, arg):
     return value * arg
+
+
+@register.filter
+def format_trace(value, arg):
+    if int(value) == -77:
+        if arg == 'dec':
+            # for graphs
+            return 0.01
+        elif arg == 'str':
+            return "Trace"
+        else:
+            return ""
+    else:
+        return Decimal(value)
