@@ -47,6 +47,7 @@ class MonthlyOb(models.Model):
 
     # precip fields
     precip = models.DecimalField(max_digits=8, decimal_places=2)
+    precip_dfn = models.DecimalField(max_digits=8, decimal_places=2)
     precip_todate = models.DecimalField(max_digits=8, decimal_places=2)
     precip_todate_dfn = models.DecimalField(max_digits=8, decimal_places=2)
     
@@ -62,6 +63,7 @@ class MonthlyOb(models.Model):
 
     # snowfall and snowdepth fields
     sf = models.DecimalField(max_digits=8, decimal_places=1)
+    sf_dfn = models.DecimalField(max_digits=8, decimal_places=1)
 
     sf_todate = models.DecimalField(max_digits=8, decimal_places=1)
     sf_todate_dfn = models.DecimalField(max_digits=8, decimal_places=1)
@@ -71,20 +73,22 @@ class MonthlyOb(models.Model):
         ArrayField(models.DateField())
     )
     sf_grtrT = models.IntegerField()
-    sf_grtr50 = models.IntegerField() # 50 = 0.50"
-    sf_grtr100 = models.IntegerField() # 100 = 1.00"
-    sf_grtr500 = models.IntegerField()
-    sf_grtr1000 = models.IntegerField()
+    sf_grtr1 = models.IntegerField() # in.
+    sf_grtr3 = models.IntegerField() 
+    sf_grtr6 = models.IntegerField()
+    sf_grtr12 = models.IntegerField()
+    sf_grtr18 = models.IntegerField()
 
     grtst_sd = models.DecimalField(max_digits=8, decimal_places=1)
     grtst_sd_dates = ArrayField(
         ArrayField(models.DateField())
     )
     sd_grtrT = models.IntegerField()
-    sd_grtr50 = models.IntegerField() # 50 = 0.50"
-    sd_grtr100 = models.IntegerField() # 100 = 1.00"
-    sd_grtr500 = models.IntegerField()
-    sd_grtr1000 = models.IntegerField()
+    sd_grtr1 = models.IntegerField() # in.
+    sd_grtr3 = models.IntegerField()
+    sd_grtr6 = models.IntegerField()
+    sd_grtr12 = models.IntegerField()
+    sd_grtr18 = models.IntegerField()
 
 
 class SunsetLakeIceInIceOut(models.Model):
