@@ -1,4 +1,5 @@
 from django.shortcuts import render
+from . import utils
 
 
 def index(request):
@@ -49,10 +50,10 @@ def summaries_monthly_view(request, year, month):
         # display form
         pass
 
-    return render(request, 'summaries/monthly/view.html', { 'title': "\%b \%d Monthly Summary" })
+    return render(request, 'summaries/monthly/view.html', { 'title': f"{utils.get_month_name(month)} {year} Monthly Summary" })
 
 def summaries_monthly_text(request, year, month):
-    return render(request, 'summaries/monthly/text.html', { 'title': "\%b \%d Monthly Summary" })
+    return render(request, 'summaries/monthly/text.html', { 'title': f"{utils.get_month_name(month)} {year} Monthly Summary" })
 
 def summaries_monthly_csv(request, year, month):
     return render(request, 'index.html', { 'title': "Home" })
@@ -65,13 +66,13 @@ def summaries_annual_home(request):
     return render(request, 'summaries/annual/view.html', { 'title': "View Annual Summary" })
 
 def summaries_annual_view(request, year):
-    return render(request, 'summaries/annual/view.html', { 'title': "\%d Annual Summary" })
+    return render(request, 'summaries/annual/view.html', { 'title': f"{year} Annual Summary" })
 
 def summaries_annual_text(request, year):
-    return render(request, 'summaries/annual/text.html', { 'title': "\%d Annual Summary" })
+    return render(request, 'summaries/annual/text.html', { 'title': f"{year} Annual Summary" })
 
 def summaries_annual_table(request, year):
-    return render(request, 'summaries/annual/table.html', { 'title': "\%d Annual Summary" })
+    return render(request, 'summaries/annual/table.html', { 'title': f"{year} Annual Summary" })
 
 def summaries_annual_html(request, year):
     return render(request, 'index.html', { 'title': "Home" })

@@ -6,7 +6,6 @@ from django import template
 
 register = template.Library()
 
-getcontext().prec = 2
 numeric_test = re.compile(r"^\d+$")
 
 @register.filter
@@ -67,3 +66,10 @@ def format_trace(value, arg):
             return ""
     else:
         return Decimal(value)
+
+@register.filter
+def format_dfn(value):
+    if value > 0:
+        return '+' + str(value)
+    else:
+        return str(value)
