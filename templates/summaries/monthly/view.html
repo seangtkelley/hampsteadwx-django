@@ -4,7 +4,7 @@
 
 {% block content %}
 
-{% if summary is None %}
+{% if monthly_summary is None %}
 <script>
     $(document).ready(function () {
         $(".monthSelect").select2({
@@ -26,7 +26,7 @@
 </script>
 {% endif %}
 
-{% if summary is not None %}
+{% if monthly_summary is not None %}
 <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
 <script>
 
@@ -58,18 +58,18 @@
                 title: 'Temperature (°F)',
                 viewWindowMode: 'explicit',
                 viewWindow: {
-                    max: {{ summary.max_temp|divide:'10'|ceil|multiply:'10' }},
-                    min: {% if summary.min_temp < 0 %}
-                        {{ summary.min_temp|divide:'10'|floor|multiply:'10' }}
+                    max: {{ monthly_summary.max_temp|divide:'10'|ceil|multiply:'10' }},
+                    min: {% if monthly_summary.min_temp < 0 %}
+                        {{ monthly_summary.min_temp|divide:'10'|floor|multiply:'10' }}
                     {% else %}
                         0
                     {% endif %}
                 },
                 gridlines: {
-                    count: {% if summary.min_temp < 0 %}
-                        {{ summary.max_temp|sub:summary.min_temp|divide:'10'|ceil|multiply:'10'|divide:'5'|add:'2' }}
+                    count: {% if monthly_summary.min_temp < 0 %}
+                        {{ monthly_summary.max_temp|sub:monthly_summary.min_temp|divide:'10'|ceil|multiply:'10'|divide:'5'|add:'2' }}
                     {% else %}
-                        {{ summary.max_temp|divide:'10'|ceil|multiply:'10'|divide:'5' }}
+                        {{ monthly_summary.max_temp|divide:'10'|ceil|multiply:'10'|divide:'5' }}
                     {% endif %}
                 }
             },
@@ -121,7 +121,7 @@
                     {{ forloop.counter }}, 
                     {{ ob.precip|format_trace:'dec' }},
                     '<div style="margin: 5px;">
-                        <h4 style="border-bottom: 1px solid grey;"> {{ summary.date.month }}/{{ forloop.counter }}/{{ summary.date.year }} </h4>
+                        <h4 style="border-bottom: 1px solid grey;"> {{ monthly_summary.date.month }}/{{ forloop.counter }}/{{ monthly_summary.date.year }} </h4>
                         {{ ob.precip|format_trace:'str' }}
                     </div>'
                 ],
@@ -165,7 +165,7 @@
                     {{ forloop.counter }}, 
                     {{ ob.snowfall|format_trace:'dec' }},
                     '<div style="margin: 5px;">
-                        <h4 style="border-bottom: 1px solid grey;"> {{ summary.date.month }}/{{ forloop.counter }}/{{ summary.date.year }} </h4>
+                        <h4 style="border-bottom: 1px solid grey;"> {{ monthly_summary.date.month }}/{{ forloop.counter }}/{{ monthly_summary.date.year }} </h4>
                         {{ ob.snowfall|format_trace:'str' }}
                     </div>'
                 ],
@@ -209,7 +209,7 @@
                     {{ forloop.counter }}, 
                     {{ ob.snowdepth|format_trace:'dec' }},
                     '<div style="margin: 5px;">
-                        <h4 style="border-bottom: 1px solid grey;"> {{ summary.date.month }}/{{ forloop.counter }}/{{ summary.date.year }} </h4>
+                        <h4 style="border-bottom: 1px solid grey;"> {{ monthly_summary.date.month }}/{{ forloop.counter }}/{{ monthly_summary.date.year }} </h4>
                         {{ ob.snowdepth|format_trace:'str' }}
                     </div>'
                 ],
@@ -239,8 +239,8 @@
         chart.draw(dataTable, options);
     }
 
-    function viewTextSummary() {
-        $('#textSummary').show();
+    function viewTextmonthly_summary() {
+        $('#textmonthly_summary').show();
         $('#charts').hide();
         $('#textBtn').attr('disabled', 'disabled');
         $('#chartsBtn').removeAttr('disabled');
@@ -284,7 +284,7 @@
 
 <div id="" class="container" style="min-height: 650px;">
 
-    {% if summary is None %}
+    {% if monthly_summary is None %}
 
     <h2 style="margin-bottom: 10px; padding-bottom: 5px; border-bottom: 1px solid #777;">Find Summary</h2>
     <div class="row better-row">
@@ -324,7 +324,7 @@
 
     <div class="row better-row">
         <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12" style="text-align: left">
-            <h1>{{ summary.date|date:'F' }} {{ summary.date.year }} Monthly Summary</h1>
+            <h1>{{ monthly_summary.date|date:'F' }} {{ monthly_summary.date.year }} Monthly Summary</h1>
         </div>
         <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12" style="min-height: 5px; border-top: 1px solid grey;"></div>
 
@@ -337,10 +337,10 @@
                 Text Summary</a>
             <a href="#" id="chartsBtn" onclick="viewCharts()" class="btn btn-primary" style="margin-bottom: 3px"><span
                     class="glyphicon glyphicon-signal" aria-hidden="true"></span>&nbsp; View Charts</a>
-            <a href="{% url 'summaries_monthly_text' year=summary.date.year month=summary.date.month %}"
+            <a href="{% url 'summaries_monthly_text' year=monthly_summary.date.year month=monthly_summary.date.month %}"
                 target="_blank" class="btn btn-primary" style="margin-bottom: 3px"><span
                     class="glyphicon glyphicon-log-in" aria-hidden="true"></span>&nbsp; Open Text Summary</a>
-            <a href="{% url 'summaries_monthly_csv' year=summary.date.year month=summary.date.month %}"
+            <a href="{% url 'summaries_monthly_csv' year=monthly_summary.date.year month=monthly_summary.date.month %}"
                 class="btn btn-primary" style="margin-bottom: 3px"><span class="glyphicon glyphicon-save-file"
                     aria-hidden="true"></span>&nbsp;
                 Download CSV</a>
@@ -355,7 +355,7 @@
         <div id="charts" style="display:none;">
             <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12" style="text-align: center">
                 <h2>
-                    {{ summary.date|date:'F' }} {{ summary.date.year }}
+                    {{ monthly_summary.date|date:'F' }} {{ monthly_summary.date.year }}
                     Daily Maximum & Minimum Temperatures (°F) <br>
                     West Hampstead, NH
                 </h2>
@@ -390,7 +390,7 @@
         <div id="textSummary">
             <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12" style="padding: 0;">
                 <iframe id="textSummaryiFrame" style="width:100%; border:none;"
-                    src="{% url 'summaries_monthly_text' year=summary.date.year month=summary.date.month %}"></iframe>
+                    src="{% url 'summaries_monthly_text' year=monthly_summary.date.year month=monthly_summary.date.month %}"></iframe>
             </div>
         </div>
         <div id="editRemarks" class="modal fade" tabindex="-1" role="dialog">
@@ -402,12 +402,12 @@
                         <h4 class="modal-title">Edit Remarks</h4>
                     </div>
                     <form
-                        action="{% url 'summaries_monthly_view' year=summary.date.year month=summary.date.month %}"
+                        action="{% url 'summaries_monthly_view' year=monthly_summary.date.year month=monthly_summary.date.month %}"
                         method="post">
                         {% csrf_token %}
                         <div class="modal-body">
                             <textarea name="remarks" rows="10" cols="70" style="margin-bottom: 10px;"
-                                class="form-control">{{ summary.remarks }}</textarea>
+                                class="form-control">{{ monthly_summary.remarks }}</textarea>
                             <input type="password" name="password" class="form-control" placeholder="Enter Password" />
                         </div>
                         <div class="modal-footer">

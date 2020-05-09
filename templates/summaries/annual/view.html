@@ -1,6 +1,375 @@
 {% extends "layouts/main.html" %}
 {% load static %}
+{% load custom_tags %}
 
 {% block content %}
+{% if annual_summary is None %}
+<script>
+    $(document).ready(function () {
+        $(".yearSelect").select2({
+            placeholder: "Select a Year",
+            allowClear: true,
+            minimumResultsForSearch: -1
+        });
+        $('.yearSelect').val('').trigger('change');
+        $('#find').click(function () {
+            window.location = "{% url 'summaries_annual_home' %}/" + $(".yearSelect").val();
+        });
+    });
+</script>
+{% endif %}
+{% if annual_summary is not None %}
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<script>
 
+    google.charts.load('current', { 'packages': ['corechart'] });
+
+    function drawAvgChart() {
+        // Some raw data (not necessarily accurate)
+        var dataTable = new google.visualization.DataTable();
+        dataTable.addColumn('string', 'Month');
+        dataTable.addColumn('number', 'Average Temperature');
+        dataTable.addColumn('number', 'Departure From Normal');
+
+        dataTable.addRows([
+
+            {% for summary in monthly_summaries %}
+                [ '{{ summary.date|date:'M' }}', {{ summary.avg_temp }}, {{ summary.avg_temp_dfn }} ],
+            {% endfor %}
+
+        ]);
+
+        var options = {
+            //title : 'Temperature',
+            vAxis: {
+                title: 'Temperature (°F)'
+            },
+            hAxis: {
+                title: 'Month'
+            },
+            legend: 'top',
+            seriesType: 'bars',
+            series: [
+                { color: 'rgb(211,47,47)', visibleInLegend: true },
+                { color: 'rgb(48,63,159)', visibleInLegend: true },
+                { color: 'rgb(83,197,17)', visibleInLegend: true },
+            ],
+            chartArea: { 'width': '80%', 'height': '75%' },
+        };
+
+        var chart = new google.visualization.ComboChart(document.getElementById('avgtempChart'));
+        chart.draw(dataTable, options);
+    }
+
+    function drawPrecipChart() {
+        // Some raw data (not necessarily accurate)
+        var dataTable = new google.visualization.DataTable();
+        dataTable.addColumn('string', 'Month');
+        dataTable.addColumn('number', 'Total Precipitation');
+        dataTable.addColumn('number', 'Departure From Normal');
+
+        dataTable.addRows([
+
+            {% for summary in monthly_summaries %}
+                [ '{{ summary.date|date:'M' }}', {{ summary.precip }}, {{ summary.precip_dfn }} ],
+            {% endfor %}
+
+        ]);
+
+        var options = {
+            //title : 'Temperature',
+            vAxis: {
+                title: 'Precipitation (in.)'
+            },
+            hAxis: {
+                title: 'Month'
+            },
+            legend: 'top',
+            seriesType: 'bars',
+            series: [
+                { color: 'rgb(211,47,47)', visibleInLegend: true },
+                { color: 'rgb(48,63,159)', visibleInLegend: true },
+                { color: 'rgb(83,197,17)', visibleInLegend: true },
+            ],
+            chartArea: { 'width': '80%', 'height': '75%' },
+        };
+
+        var chart = new google.visualization.ComboChart(document.getElementById('precipChart'));
+        chart.draw(dataTable, options);
+    }
+
+    function drawGrtsPrecipChart() {
+        // Some raw data (not necessarily accurate)
+        var dataTable = new google.visualization.DataTable();
+        dataTable.addColumn('string', 'Month');
+        dataTable.addColumn('number', 'Greatest Precipitation');
+        dataTable.addColumn({ 'type': 'string', 'role': 'tooltip', 'p': { 'html': true } });
+
+        dataTable.addRows([
+
+            {% for summary in monthly_summaries %}
+                [ 
+                    '{{ summary.date|date:'M' }}', 
+                    {{ summary.grtst_precip|format_trace:'dec' }}, 
+                    '<div style="margin: 5px;">
+                        <h4 style="border-bottom: 1px solid grey;"> 
+                            {% for date in summary.grtst_precip_dates %}
+                                {{ date|date:'m/d/Y' }}
+                                {% if not forloop.last %}
+                                    ,
+                                {% endif %}
+                            {% endfor %}
+                        </h4>
+                        {{ summary.grtst_precip|format_trace:'str' }}
+                    </div>'
+                ],
+            {% endfor %}
+
+        ]);
+
+        var options = {
+            //title : 'Temperature',
+            vAxis: {
+                title: 'Precipitation (in.)'
+            },
+            hAxis: {
+                title: 'Month'
+            },
+            legend: 'none',
+            seriesType: 'bars',
+            series: [
+                { color: 'rgb(48,63,159)', visibleInLegend: true },
+            ],
+            chartArea: { 'width': '80%', 'height': '75%' },
+            tooltip: { isHtml: true }
+        };
+
+        var chart = new google.visualization.ColumnChart(document.getElementById('grtsPrecipChart'));
+        chart.draw(dataTable, options);
+    }
+
+    function drawSnowfallChart() {
+        // Some raw data (not necessarily accurate)
+        var dataTable = new google.visualization.DataTable();
+        dataTable.addColumn('string', 'Month');
+        dataTable.addColumn('number', 'Total Snowfall');
+        dataTable.addColumn({ 'type': 'string', 'role': 'tooltip', 'p': { 'html': true } });
+
+        dataTable.addRows([
+
+            {% for summary in monthly_summaries %}
+                [ 
+                    '{{ summary.date|date:'M' }}', 
+                    {{ summary.sf|format_trace:'dec' }}, 
+                    '<div style="margin: 5px;">
+                        <h4 style="border-bottom: 1px solid grey;">{{ summary.date|date:'M' }}</h4>
+                        {{ summary.sf|format_trace:'str' }}
+                    </div>'
+                ],
+            {% endfor %}
+
+        ]);
+
+        var options = {
+            //title : 'Temperature',
+            vAxis: {
+                title: 'Total Snowfall (in.)'
+            },
+            hAxis: {
+                title: 'Month'
+            },
+            legend: 'none',
+            seriesType: 'bars',
+            series: [
+                { color: 'rgb(48,63,159)', visibleInLegend: true }
+            ],
+            chartArea: { 'width': '80%', 'height': '75%' },
+            tooltip: { isHtml: true }
+        };
+
+        var chart = new google.visualization.ColumnChart(document.getElementById('snowfallChart'));
+        chart.draw(dataTable, options);
+    }
+
+    function drawSnowDepthChart() {
+        // Some raw data (not necessarily accurate)
+        var dataTable = new google.visualization.DataTable();
+        dataTable.addColumn('string', 'Month');
+        dataTable.addColumn('number', 'Greatest Snow Depth');
+        dataTable.addColumn({ 'type': 'string', 'role': 'tooltip', 'p': { 'html': true } });
+
+        dataTable.addRows([
+
+            {% for summary in monthly_summaries %}
+                [ 
+                    '{{ summary.date|date:'M' }}', 
+                    {{ summary.grtst_sd|format_trace:'dec' }}, 
+                    '<div style="margin: 5px;">
+                        <h4 style="border-bottom: 1px solid grey;"> 
+                            {% for date in summary.grtst_sd_dates %}
+                                {{ date|date:'m/d/Y' }}
+                                {% if not forloop.last %}
+                                    ,
+                                {% endif %}
+                            {% endfor %}
+                        </h4>
+                        {{ summary.grtst_sd|format_trace:'str' }}
+                    </div>'
+                ],
+            {% endfor %}
+
+        ]);
+
+        var options = {
+            //title : 'Temperature',
+            vAxis: {
+                title: 'Snow Depth (in.)'
+            },
+            hAxis: {
+                title: 'Month'
+            },
+            legend: 'none',
+            seriesType: 'bars',
+            series: [
+                { color: 'rgb(48,63,159)', visibleInLegend: true }
+            ],
+            chartArea: { 'width': '80%', 'height': '75%' },
+            tooltip: { isHtml: true }
+        };
+
+        var chart = new google.visualization.ColumnChart(document.getElementById('snowDepthChart'));
+        chart.draw(dataTable, options);
+    }
+
+    function viewTextSummary() {
+        $('#textSummary').show();
+        $('#charts').hide();
+        $('#textBtn').attr('disabled', 'disabled');
+        $('#chartsBtn').removeAttr('disabled');
+    }
+
+    function viewCharts() {
+        $('#textSummary').hide();
+        $('#charts').show();
+        $('#textBtn').removeAttr('disabled');
+        $('#chartsBtn').attr('disabled', 'disabled');
+        drawAvgChart();
+        drawPrecipChart();
+        drawGrtsPrecipChart();
+        drawSnowfallChart();
+        drawSnowDepthChart();
+    }
+
+    function iframeLoaded() {
+        var iFrameID = document.getElementById('textSummaryiFrame');
+        if (iFrameID) {
+            // here you can make the height, I delete it first, then I make it again
+            iFrameID.height = "";
+            iFrameID.height = iFrameID.contentWindow.document.body.scrollHeight + "px";
+        }
+    }
+    $(document).ready(function () {
+        $('#textSummaryiFrame').load(function () {
+            iframeLoaded();
+        });
+
+        $('#textBtn').attr('disabled', 'disabled');
+
+        $(window).resize(function () {
+            drawAvgChart();
+            drawPrecipChart();
+            drawGrtsPrecipChart();
+            drawSnowfallChart();
+            drawSnowDepthChart();
+        });
+
+    });
+</script>
+{% endif %}
+<div class="container" style="min-height: 650px;">
+    {% if annual_summary is None %}
+    <h2 style="margin-bottom: 10px; padding-bottom: 5px; border-bottom: 1px solid #777;">Find Summary</h2>
+    <div class="row better-row">
+        <div class="col-xs-6 col-sm-6 col-md-6 col-lg-6" style="text-align: center" placeholder="Select a Year">
+            <select class="yearSelect" style="width: 100%">
+                {% now "Y" as current_year %}
+                {% for year in 2011|range_inclu:current_year %}
+                    <option value='{{ year }}'>{{ year }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-xs-6 col-sm-6 col-md-6 col-lg-6" style="text-align: center; margin-bottom: 5px;">
+            <input type="button" id="find" class="btn btn-success" style="width: 100%; padding: 4px 12px;"
+                value="Find Summary" />
+        </div>
+        <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12" style="min-height: 5px; border-bottom: 1px solid grey;">
+        </div>
+    </div>
+    {% endif %}
+    {% if annual_summary is not None %}
+    <div class="row better-row">
+        <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12" style="text-align: left">
+            <h1>{{ annual_summary.year }} Annual Summary</h1>
+        </div>
+        <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12" style="min-height: 5px; border-top: 1px solid grey;"></div>
+        <div id="summaryBtns" class="col-xs-12 col-sm-12 col-md-12 col-lg-12" style="text-align: left; margin-bottom:2px;">
+            <a href="{% url 'summaries_annual_home' %}" class="btn btn-info" style="margin-bottom: 3px"><span
+                    class="glyphicon glyphicon-menu-left" aria-hidden="true"></span>&nbsp; Back</a>
+            <a href="#" id="textBtn" onclick="viewTextSummary()" class="btn btn-primary"
+                style="margin-bottom: 3px"><span class="glyphicon glyphicon-font" aria-hidden="true"></span>&nbsp; View
+                Text Summary</a>
+            <a href="#" id="chartsBtn" onclick="viewCharts()" class="btn btn-primary" style="margin-bottom: 3px"><span
+                    class="glyphicon glyphicon-signal" aria-hidden="true"></span>&nbsp; View Charts</a>
+            <a href="{% url 'summaries_annual_text' year=annual_summary.year }}" target="_blank" class="btn btn-primary"
+                style="margin-bottom: 3px"><span class="glyphicon glyphicon-save-file" aria-hidden="true"></span>&nbsp;
+                Open Text Summary</a>
+            <a href="{% url 'summaries_annual_table' year=annual_summary.year }}" target="_blank" class="btn btn-primary"
+                style="margin-bottom: 3px"><span class="glyphicon glyphicon-th" aria-hidden="true"></span>&nbsp;
+                Open Table Summary</a>
+        </div>
+        <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12" style="min-height: 5px; border-top: 1px solid grey;"></div>
+        <div id="charts" style="display:none;">
+            <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12" style="text-align: center">
+                <h2>Average Temperature and Departure from Normal (°F)</h2>
+            </div>
+            <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12" style="text-align: center">
+                <div id="avgtempChart" style="width: 100%; min-height: 555px;"></div>
+            </div>
+            <br>
+            <br>
+            <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12" style="text-align: center">
+                <h2>Total Precipitation and Monthly Precipitation Departure (in.)</h2>
+            </div>
+            <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12" style="text-align: center">
+                <div id="precipChart" style="width: 100%; min-height: 555px;"></div>
+            </div>
+            <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12" style="text-align: center">
+                <h2>Greatest Precipitation Day (in.)</h2>
+            </div>
+            <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12" style="text-align: center">
+                <div id="grtsPrecipChart" style="width: 100%; min-height: 555px;"></div>
+            </div>
+            <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12" style="text-align: center">
+                <h2>Total Snowfall (in.)</h2>
+            </div>
+            <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12" style="text-align: center">
+                <div id="snowfallChart" style="width: 100%; min-height: 555px;"></div>
+            </div>
+            <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12" style="text-align: center">
+                <h2>Greatest Snow Depth (in.)</h2>
+            </div>
+            <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12" style="text-align: center">
+                <div id="snowDepthChart" style="width: 100%; min-height: 555px;"></div>
+            </div>
+            <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12" style="text-align: left; min-height: 20px;"></div>
+        </div>
+        <div id="textSummary">
+            <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12" style="padding: 0;">
+                <iframe id="textSummaryiFrame" style="width:100%; border:none;"
+                    src="{% url 'summaries_annual_text' year=annual_summary.year }}"></iframe>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
 {% endblock %}
