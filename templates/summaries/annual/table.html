@@ -1,6 +1,79 @@
-{% extends "layouts/main.html" %}
+{% extends "layouts/raw.html" %}
 {% load static %}
+{% load custom_tags %}
 
 {% block content %}
-
+<h3>NWS COOPERATIVE CLIMATE STATION, WEST HAMPSTEAD, NH</h3>
+<h4>{{ summary.year }} Annual Summary</h4>
+<table class="table">
+    <tr>
+        <th>Month</th>
+        <th>Avg. Max</th>
+        <th>Avg. Min</th>
+        <th>Avg.</th>
+        <th>Dep.</th>
+        <th>Highest</th>
+        <th>Date</th>
+        <th>Lowest</th>
+        <th>Date</th>
+        <th colspan="4" style="min-width: 170px;">Number of Days w/ <br>>=90 <=32 <=32 <=0</th>
+        <th>Total Precip.</th>
+        <th>Dep.</th>
+        <th>Greatest Day</th>
+        <th>Date</th>
+        <th>Total Snowfall</th>
+        <th>Dep.</th>
+        <th>Greatest Day</th>
+        <th>Date</th>
+        <th>Greatest Storm</th>
+        <th>Date</th>
+        <th>Greatest Depth</th>
+        <th>Date</th>
+        <th>Fog</th>
+        <th>Ice Pel</th>
+        <th>Glaze</th>
+        <th>Th</th>
+        <th>Hail</th>
+        <th>Dam Wind</th>
+    </tr>
+    {% for summary in summaries %}
+    <tr>
+        {% if summary|hasattr:'date' %}
+        <td>{{ summary.date|date:'F' }}</td>
+        {% else %}
+        <td>{{ summary.year }}</td>
+        {% endif %}
+        <td>{{ summary.max_temp_avg }}</td>
+        <td>{{ summary.min_temp_avg }}</td>
+        <td>{{ summary.avg_temp }}</td>
+        <td>{{ summary.avg_temp_dfn|format_dfn }}</td>
+        <td>{{ summary.max_temp }}</td>
+        <td>{{ summary.max_temp_dates|last|date:'m/d/Y' }}</td>
+        <td>{{ summary.min_temp }}</td>
+        <td>{{ summary.min_temp_dates|last|date:'m/d/Y' }}</td>
+        <td>{{ summary.max_temp_grtr90_count }}</td>
+        <td>{{ summary.max_temp_less32_count }}</td>
+        <td>{{ summary.min_temp_less32_count }}</td>
+        <td>{{ summary.min_temp_less0_count }}</td>
+        <td>{{ summary.precip|format_trace:'str' }}</td>
+        <td>{{ summary.precip_dfn|format_dfn }}</td>
+        <td>{{ summary.grtst_precip }}</td>
+        <td>{{ summary.grtst_precip_dates|last|date:'m/d/Y' }}</td>
+        <td>{{ summary.sf|format_trace:'str' }}</td>
+        <td>{{ summary.sf_dfn|format_dfn }}</td>
+        <td>{{ summary.grtst_sf|format_trace:'str' }}</td>
+        <td>{{ summary.grtst_sf_dates|last|date:'m/d/Y' }}</td>
+        <td>N/A</td>
+        <td>N/A</td>
+        <td>{{ summary.grtsd_sd|format_trace:'str' }}</td>
+        <td>{{ summary.grtsd_sd_dates|last|date:'m/d/Y' }}</td>
+        <td>N/A</td>
+        <td>N/A</td>
+        <td>N/A</td>
+        <td>N/A</td>
+        <td>N/A</td>
+        <td>N/A</td>
+    </tr>
+    {% endfor %}
+</table>
 {% endblock %}

@@ -21,6 +21,10 @@ def getattribute(value, arg):
     else:
         return None
 
+@register.filter(name='hasattr')
+def hasattribute(value, arg):
+    return hasattr(value, str(arg))
+
 @register.filter(name='zip')
 def zip_lists(value, arg):
     return zip(value, arg)
