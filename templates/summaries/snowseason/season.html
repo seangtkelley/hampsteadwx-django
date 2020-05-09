@@ -18,7 +18,7 @@
 
             dataTable.addRows([
                 {% for abbr, name in month_abbrs|zip:month_names  %}
-                    {% with val=summary|getattribute:abbr %}
+                    {% with val=summary|getattr:abbr %}
                         [
                             
                             '{{ name }}',
