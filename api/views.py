@@ -1,5 +1,11 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
+import os
+
+from boilerplate.settings import BASE_DIR
 from . import utils
+from . import workflow
+from . import forms
+from . import models
 
 
 def index(request):
@@ -17,7 +23,7 @@ def photos_home(request):
 
 def photos_submit(request):
     if request.method == 'POST':
-        # calc monthly summary
+        # save photo
         pass
 
     else:
@@ -30,7 +36,26 @@ def photos_submit(request):
 def summaries_monthly_submit(request):
     if request.method == 'POST':
         # calc monthly summary
-        pass
+        form = forms.SubmitMonthlyCSV(request.POST, request.FILES)
+        if form.is_valid():
+            if form.cleaned_data['password'] == os.environ['SITE_PASS']:
+                # move csv file
+                filepath = os.path.join(BASE_DIR, 'assets', 'csv', request.FILES['csv_file'].name)
+                with open(filepath, 'wb+') as dest:
+                    for chunk in request.FILES['csv_file'].chunks():
+                        dest.write(chunk)
+
+                # process csv
+                year, month = workflow.process_csv(filepath)
+                
+                # redirect
+                redirect('summaries_monthly_view', year=year, month=month)
+            
+            else: # TODO: better error handling
+                print('Wrong Password')
+        
+        else: # TODO: better error handling
+            print('Invalid Form')
 
     else:
         # display form
@@ -50,10 +75,37 @@ def summaries_monthly_view(request, year, month):
         # display form
         pass
 
-    return render(request, 'summaries/monthly/view.html', { 'title': f"{utils.get_month_name(month)} {year} Monthly Summary" })
+    # get monthly summary
+    if models.MonthlyOb.objects.filter(date__year=year, date__month=month).exists():
+        # from database
+        summary = models.MonthlyOb.objects.filter(date__year=year, date__month=month)
+    else:
+        # calc
+        summary = workflow.calc_monthly_summary(year, month)
+
+    return render(request, 'summaries/monthly/view.html', { 
+        'title': f"{utils.get_month_name(month)} {year} Monthly Summary",
+        'monthly_summary': summary,
+        'daily_obs': models.DailyOb.objects.filter(date__year=year, date__month=month).order_by('date')
+        })
 
 def summaries_monthly_text(request, year, month):
-    return render(request, 'summaries/monthly/text.html', { 'title': f"{utils.get_month_name(month)} {year} Monthly Summary" })
+    # get monthly summary
+    if models.MonthlyOb.objects.filter(date__year=year, date__month=month).exists():
+        # from database
+        summary = models.MonthlyOb.objects.filter(date__year=year, date__month=month)
+    else:
+        # calc
+        summary = workflow.calc_monthly_summary(year, month)
+
+    normals = workflow.get_normals()
+    return render(request, 'summaries/monthly/text.html', { 
+        'title': f"{utils.get_month_name(month)} {year} Monthly Summary",
+        'monthly_summary': summary,
+        'AVG_TEMP': normals['temp'][month-1],
+        'AVG_PRECIP': normals['precip'][month-1],
+        'AVG_SNFL': normals['sf'][month-1],
+        })
 
 def summaries_monthly_csv(request, year, month):
     return render(request, 'index.html', { 'title': "Home" })
@@ -66,7 +118,28 @@ def summaries_annual_home(request):
     return render(request, 'summaries/annual/view.html', { 'title': "View Annual Summary" })
 
 def summaries_annual_view(request, year):
-    return render(request, 'summaries/annual/view.html', { 'title': f"{year} Annual Summary" })
+    # get annual summary
+    if None is not None: # models.AnnualSummary.objects.filter(date__year=year).exists():
+        # from database: TODO
+        summary = None
+    else:
+        # calc
+        annual_summary = workflow.calc_annual_summary(year)
+
+    # get monthly summaries
+    if models.MonthlyOb.objects.filter(date__year=year).count() > 0:
+        # from database
+        monthly_summaries = models.MonthlyOb.objects.filter(date__year=year)
+    else:
+        # calc
+        last_avail_month = models.DailyOb.objects.filter(date__year=year).lastest('date').date.month
+        monthly_summaries = [ workflow.calc_monthly_summary(year, month) for month in range(1, last_avail_month+1) ]
+
+    return render(request, 'summaries/annual/view.html', { 
+        'title': f"{year} Annual Summary",
+        'annual_summary': annual_summary,
+        'monthly_summaries': monthly_summaries,
+        })
 
 def summaries_annual_text(request, year):
     return render(request, 'summaries/annual/text.html', { 'title': f"{year} Annual Summary" })

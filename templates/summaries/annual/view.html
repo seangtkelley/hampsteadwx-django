@@ -111,7 +111,7 @@
                 [ 
                     '{{ summary.date|date:'M' }}', 
                     {{ summary.grtst_precip|format_trace:'dec' }}, 
-                    '<div style="margin: 5px;">
+                    `<div style="margin: 5px;">
                         <h4 style="border-bottom: 1px solid grey;"> 
                             {% for date in summary.grtst_precip_dates %}
                                 {{ date|date:'m/d/Y' }}
@@ -120,8 +120,8 @@
                                 {% endif %}
                             {% endfor %}
                         </h4>
-                        {{ summary.grtst_precip|format_trace:'str' }}
-                    </div>'
+                        {{ summary.grtst_precip|format_trace:'str:precip' }}
+                    </div>`
                 ],
             {% endfor %}
 
@@ -161,10 +161,10 @@
                 [ 
                     '{{ summary.date|date:'M' }}', 
                     {{ summary.sf|format_trace:'dec' }}, 
-                    '<div style="margin: 5px;">
+                    `<div style="margin: 5px;">
                         <h4 style="border-bottom: 1px solid grey;">{{ summary.date|date:'M' }}</h4>
-                        {{ summary.sf|format_trace:'str' }}
-                    </div>'
+                        {{ summary.sf|format_trace:'str:snow' }}
+                    </div>`
                 ],
             {% endfor %}
 
@@ -204,7 +204,7 @@
                 [ 
                     '{{ summary.date|date:'M' }}', 
                     {{ summary.grtst_sd|format_trace:'dec' }}, 
-                    '<div style="margin: 5px;">
+                    `<div style="margin: 5px;">
                         <h4 style="border-bottom: 1px solid grey;"> 
                             {% for date in summary.grtst_sd_dates %}
                                 {{ date|date:'m/d/Y' }}
@@ -213,8 +213,8 @@
                                 {% endif %}
                             {% endfor %}
                         </h4>
-                        {{ summary.grtst_sd|format_trace:'str' }}
-                    </div>'
+                        {{ summary.grtst_sd|format_trace:'str:snow' }}
+                    </div>`
                 ],
             {% endfor %}
 
@@ -309,7 +309,7 @@
     {% if annual_summary is not None %}
     <div class="row better-row">
         <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12" style="text-align: left">
-            <h1>{{ annual_summary.year }} Annual Summary</h1>
+            <h1>{{ annual_summary.date.year }} Annual Summary</h1>
         </div>
         <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12" style="min-height: 5px; border-top: 1px solid grey;"></div>
         <div id="summaryBtns" class="col-xs-12 col-sm-12 col-md-12 col-lg-12" style="text-align: left; margin-bottom:2px;">
@@ -320,10 +320,10 @@
                 Text Summary</a>
             <a href="#" id="chartsBtn" onclick="viewCharts()" class="btn btn-primary" style="margin-bottom: 3px"><span
                     class="glyphicon glyphicon-signal" aria-hidden="true"></span>&nbsp; View Charts</a>
-            <a href="{% url 'summaries_annual_text' year=annual_summary.year }}" target="_blank" class="btn btn-primary"
+            <a href="{% url 'summaries_annual_text' year=annual_summary.date.year }}" target="_blank" class="btn btn-primary"
                 style="margin-bottom: 3px"><span class="glyphicon glyphicon-save-file" aria-hidden="true"></span>&nbsp;
                 Open Text Summary</a>
-            <a href="{% url 'summaries_annual_table' year=annual_summary.year }}" target="_blank" class="btn btn-primary"
+            <a href="{% url 'summaries_annual_table' year=annual_summary.date.year }}" target="_blank" class="btn btn-primary"
                 style="margin-bottom: 3px"><span class="glyphicon glyphicon-th" aria-hidden="true"></span>&nbsp;
                 Open Table Summary</a>
         </div>
@@ -366,7 +366,7 @@
         <div id="textSummary">
             <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12" style="padding: 0;">
                 <iframe id="textSummaryiFrame" style="width:100%; border:none;"
-                    src="{% url 'summaries_annual_text' year=annual_summary.year }}"></iframe>
+                    src="{% url 'summaries_annual_text' year=annual_summary.date.year }}"></iframe>
             </div>
         </div>
     </div>

@@ -23,11 +23,11 @@
                             
                             '{{ name }}',
                             {{ val|format_trace:'dec' }},
-                            '{{ val|format_trace:'str' }}',
-                            '<div style="margin: 5px;">
+                            '{{ val|format_trace:'str:snow' }}',
+                            `<div style="margin: 5px;">
                                 <h4 style="border-bottom: 1px solid grey;">{{ name }}</h4>
-                                {{ val|format_trace:'str' }}
-                            </div>'
+                                {{ val|format_trace:'str:snow' }}
+                            </div>`
                         ],
                     {% endwith %}
                 {% endfor %}

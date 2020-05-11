@@ -107,5 +107,9 @@ STATICFILES_DIRS = (
     os.path.join(BASE_DIR, 'assets'),
 )
 
+# X Frame options
+X_FRAME_OPTIONS = 'SAMEORIGIN'
 
+
+# secret settings
 from .settings_secret import *

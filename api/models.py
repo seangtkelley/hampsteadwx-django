@@ -2,13 +2,17 @@ from django.db import models
 from django.contrib.postgres.fields import ArrayField
 
 class DailyOb(models.Model):
+    # meta
     date = models.DateField()
+    csv_filepath = models.CharField(max_length=512)
+
     max_temp = models.DecimalField(max_digits=8, decimal_places=1)
     min_temp = models.DecimalField(max_digits=8, decimal_places=1)
     atob_temp = models.DecimalField(max_digits=8, decimal_places=1)
-    precip = models.DecimalField(max_digits=8, decimal_places=2)
-    snowfall = models.DecimalField(max_digits=8, decimal_places=1)
-    snowdepth = models.DecimalField(max_digits=8, decimal_places=1)
+    precip = models.DecimalField(max_digits=8, decimal_places=3)
+    snowfall = models.DecimalField(max_digits=8, decimal_places=3)
+    snowdepth = models.DecimalField(max_digits=8, decimal_places=3)
+
 
 class MonthlyOb(models.Model):
     # meta
@@ -40,18 +44,18 @@ class MonthlyOb(models.Model):
     min_temp_less0_count = models.IntegerField()
 
     avg_temp = models.DecimalField(max_digits=8, decimal_places=1)
-    avg_dfn = models.DecimalField(max_digits=8, decimal_places=1)
+    avg_temp_dfn = models.DecimalField(max_digits=8, decimal_places=1)
 
     hdd_count = models.IntegerField()
     cdd_count = models.IntegerField()
 
     # precip fields
-    precip = models.DecimalField(max_digits=8, decimal_places=2)
-    precip_dfn = models.DecimalField(max_digits=8, decimal_places=2)
-    precip_todate = models.DecimalField(max_digits=8, decimal_places=2)
-    precip_todate_dfn = models.DecimalField(max_digits=8, decimal_places=2)
+    precip = models.DecimalField(max_digits=8, decimal_places=3)
+    precip_dfn = models.DecimalField(max_digits=8, decimal_places=3)
+    precip_todate = models.DecimalField(max_digits=8, decimal_places=3)
+    precip_todate_dfn = models.DecimalField(max_digits=8, decimal_places=3)
     
-    grtst_precip = models.DecimalField(max_digits=8, decimal_places=2)
+    grtst_precip = models.DecimalField(max_digits=8, decimal_places=3)
     grtst_precip_dates = ArrayField(
         ArrayField(models.DateField())
     )
@@ -62,13 +66,13 @@ class MonthlyOb(models.Model):
     precip_grtr100 = models.IntegerField()
 
     # snowfall and snowdepth fields
-    sf = models.DecimalField(max_digits=8, decimal_places=1)
-    sf_dfn = models.DecimalField(max_digits=8, decimal_places=1)
+    sf = models.DecimalField(max_digits=8, decimal_places=3)
+    sf_dfn = models.DecimalField(max_digits=8, decimal_places=3)
 
-    sf_todate = models.DecimalField(max_digits=8, decimal_places=1)
-    sf_todate_dfn = models.DecimalField(max_digits=8, decimal_places=1)
+    sf_todate = models.DecimalField(max_digits=8, decimal_places=3)
+    sf_todate_dfn = models.DecimalField(max_digits=8, decimal_places=3)
 
-    grtst_sf = models.DecimalField(max_digits=8, decimal_places=1)
+    grtst_sf = models.DecimalField(max_digits=8, decimal_places=3)
     grtst_sf_dates = ArrayField(
         ArrayField(models.DateField())
     )
@@ -79,7 +83,7 @@ class MonthlyOb(models.Model):
     sf_grtr12 = models.IntegerField()
     sf_grtr18 = models.IntegerField()
 
-    grtst_sd = models.DecimalField(max_digits=8, decimal_places=1)
+    grtst_sd = models.DecimalField(max_digits=8, decimal_places=3)
     grtst_sd_dates = ArrayField(
         ArrayField(models.DateField())
     )

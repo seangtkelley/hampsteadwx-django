@@ -26,12 +26,12 @@
                         // using only year 0 and 1 in order to compare durations
                         new Date(0, {{ summary.icein_date|date:"n" }}-1, {{ summary.icein_date|date:"j" }}),
                         new Date({{ summary.iceout_date|date:"Y" }}-{{ summary.icein_date|date:"Y" }}, {{ summary.iceout_date|date:"n" }}-1, {{ summary.icein_date|date:"j" }}),
-                        '<div style="margin: 5px;">
+                        `<div style="margin: 5px;">
                             <h4 style="border-bottom: 1px solid grey;">{{ summary.season }}</h4>
                             {{ summary.icein_date|date:"M j, Y" }} - {{ summary.iceout_date|date:"M j, Y" }}
                             <br>
                             <b>Duration:</b> {{ summary.duration }}
-                        </div>'
+                        </div>`
                     
                     ],
                 {% endfor %}

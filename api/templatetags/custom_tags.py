@@ -25,6 +25,13 @@ def getattribute(value, arg):
 def hasattribute(value, arg):
     return hasattr(value, str(arg))
 
+@register.filter
+def iloc(l, i):
+    try:
+        return l[int(i)]
+    except:
+        return None
+
 @register.filter(name='zip')
 def zip_lists(value, arg):
     return zip(value, arg)
@@ -60,20 +67,25 @@ def floor(value):
 
 @register.filter
 def format_trace(value, arg):
-    if int(value) == -77:
+    if float(value) == 0.001:
         if arg == 'dec':
             # for graphs
             return 0.01
-        elif arg == 'str':
+        elif 'str' in arg:
             return "Trace"
         else:
             return ""
     else:
-        return Decimal(value)
+        if 'precip' in arg:
+            return round(Decimal(value), 2)
+        elif 'snow' in arg:
+            return round(Decimal(value), 1)
+        else:
+            return Decimal(value)
 
 @register.filter
 def format_dfn(value):
-    if value > 0:
+    if float(value) > 0:
         return '+' + str(value)
     else:
         return str(value)

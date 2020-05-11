@@ -4,7 +4,7 @@
 
 {% block content %}
 <h3>NWS COOPERATIVE CLIMATE STATION, WEST HAMPSTEAD, NH</h3>
-<h4>{{ summary.year }} Annual Summary</h4>
+<h4>{{ summary.date.year }} Annual Summary</h4>
 <table class="table">
     <tr>
         <th>Month</th>
@@ -41,7 +41,7 @@
         {% if summary|hasattr:'date' %}
         <td>{{ summary.date|date:'F' }}</td>
         {% else %}
-        <td>{{ summary.year }}</td>
+        <td>{{ summary.date.year }}</td>
         {% endif %}
         <td>{{ summary.max_temp_avg }}</td>
         <td>{{ summary.min_temp_avg }}</td>
@@ -55,17 +55,17 @@
         <td>{{ summary.max_temp_less32_count }}</td>
         <td>{{ summary.min_temp_less32_count }}</td>
         <td>{{ summary.min_temp_less0_count }}</td>
-        <td>{{ summary.precip|format_trace:'str' }}</td>
+        <td>{{ summary.precip|format_trace:'str:precip' }}</td>
         <td>{{ summary.precip_dfn|format_dfn }}</td>
         <td>{{ summary.grtst_precip }}</td>
         <td>{{ summary.grtst_precip_dates|last|date:'m/d/Y' }}</td>
-        <td>{{ summary.sf|format_trace:'str' }}</td>
+        <td>{{ summary.sf|format_trace:'str:snow' }}</td>
         <td>{{ summary.sf_dfn|format_dfn }}</td>
-        <td>{{ summary.grtst_sf|format_trace:'str' }}</td>
+        <td>{{ summary.grtst_sf|format_trace:'str:snow' }}</td>
         <td>{{ summary.grtst_sf_dates|last|date:'m/d/Y' }}</td>
         <td>N/A</td>
         <td>N/A</td>
-        <td>{{ summary.grtsd_sd|format_trace:'str' }}</td>
+        <td>{{ summary.grtsd_sd|format_trace:'str:snow' }}</td>
         <td>{{ summary.grtsd_sd_dates|last|date:'m/d/Y' }}</td>
         <td>N/A</td>
         <td>N/A</td>
