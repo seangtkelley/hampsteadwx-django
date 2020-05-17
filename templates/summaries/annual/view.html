@@ -320,10 +320,10 @@
                 Text Summary</a>
             <a href="#" id="chartsBtn" onclick="viewCharts()" class="btn btn-primary" style="margin-bottom: 3px"><span
                     class="glyphicon glyphicon-signal" aria-hidden="true"></span>&nbsp; View Charts</a>
-            <a href="{% url 'summaries_annual_text' year=annual_summary.date.year }}" target="_blank" class="btn btn-primary"
+            <a href="{% url 'summaries_annual_text' year=annual_summary.date.year %}" target="_blank" class="btn btn-primary"
                 style="margin-bottom: 3px"><span class="glyphicon glyphicon-save-file" aria-hidden="true"></span>&nbsp;
                 Open Text Summary</a>
-            <a href="{% url 'summaries_annual_table' year=annual_summary.date.year }}" target="_blank" class="btn btn-primary"
+            <a href="{% url 'summaries_annual_table' year=annual_summary.date.year %}" target="_blank" class="btn btn-primary"
                 style="margin-bottom: 3px"><span class="glyphicon glyphicon-th" aria-hidden="true"></span>&nbsp;
                 Open Table Summary</a>
         </div>
@@ -366,7 +366,7 @@
         <div id="textSummary">
             <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12" style="padding: 0;">
                 <iframe id="textSummaryiFrame" style="width:100%; border:none;"
-                    src="{% url 'summaries_annual_text' year=annual_summary.date.year }}"></iframe>
+                    src="{% url 'summaries_annual_text' year=annual_summary.date.year %}"></iframe>
             </div>
         </div>
     </div>

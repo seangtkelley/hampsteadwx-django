@@ -4,7 +4,7 @@
 
 {% block content %}
 <h3>NWS COOPERATIVE CLIMATE STATION, WEST HAMPSTEAD, NH</h3>
-<h4>{{ summary.date.year }} Annual Summary</h4>
+<h4>{{ all_summaries.0.date.year }} Annual Summary</h4>
 <table class="table">
     <tr>
         <th>Month</th>
@@ -36,9 +36,9 @@
         <th>Hail</th>
         <th>Dam Wind</th>
     </tr>
-    {% for summary in summaries %}
+    {% for summary in all_summaries %}
     <tr>
-        {% if summary|hasattr:'date' %}
+        {% if summary|hasattr:'precip_todate' %}
         <td>{{ summary.date|date:'F' }}</td>
         {% else %}
         <td>{{ summary.date.year }}</td>

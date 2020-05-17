@@ -121,19 +121,21 @@ def summaries_annual_view(request, year):
     # get annual summary
     if None is not None: # models.AnnualSummary.objects.filter(date__year=year).exists():
         # from database: TODO
-        summary = None
+        # summary = models.AnnualSummary.objects.filter(date__year=year)
+        pass
     else:
         # calc
         annual_summary = workflow.calc_annual_summary(year)
 
     # get monthly summaries
-    if models.MonthlyOb.objects.filter(date__year=year).count() > 0:
-        # from database
-        monthly_summaries = models.MonthlyOb.objects.filter(date__year=year)
-    else:
-        # calc
-        last_avail_month = models.DailyOb.objects.filter(date__year=year).lastest('date').date.month
-        monthly_summaries = [ workflow.calc_monthly_summary(year, month) for month in range(1, last_avail_month+1) ]
+    monthly_summaries = []
+    for month in range(1, 13):
+        if models.MonthlyOb.objects.filter(date__year=year, date__month=month).exists():
+            # from database
+            monthly_summaries.append(models.MonthlyOb.objects.filter(date__year=year, date__month=month))
+        elif models.DailyOb.objects.filter(date__year=year, date__month=month).count() > 0:
+            # calc
+            monthly_summaries.append(workflow.calc_monthly_summary(year, month))
 
     return render(request, 'summaries/annual/view.html', { 
         'title': f"{year} Annual Summary",
@@ -142,10 +144,45 @@ def summaries_annual_view(request, year):
         })
 
 def summaries_annual_text(request, year):
-    return render(request, 'summaries/annual/text.html', { 'title': f"{year} Annual Summary" })
+    # get annual summary
+    if None is not None: # models.AnnualSummary.objects.filter(date__year=year).exists():
+        # from database: TODO
+        # summary = models.AnnualSummary.objects.filter(date__year=year)
+        pass
+    else:
+        # calc
+        annual_summary = workflow.calc_annual_summary(year)
+
+    return render(request, 'summaries/annual/text.html', {
+        'title': f"{year} Annual Summary",
+        'annual_summary': annual_summary
+        })
 
 def summaries_annual_table(request, year):
-    return render(request, 'summaries/annual/table.html', { 'title': f"{year} Annual Summary" })
+    all_summaries = []
+
+    # get monthly summaries    
+    for month in range(1, 13):
+        if models.MonthlyOb.objects.filter(date__year=year, date__month=month).exists():
+            # from database
+            all_summaries.append(models.MonthlyOb.objects.filter(date__year=year, date__month=month))
+        elif models.DailyOb.objects.filter(date__year=year, date__month=month).count() > 0:
+            # calc
+            all_summaries.append(workflow.calc_monthly_summary(year, month))
+
+    # get annual summary
+    if None is not None: # models.AnnualSummary.objects.filter(date__year=year).exists():
+        # from database: TODO
+        # all_summaries.append(models.AnnualSummary.objects.filter(date__year=year))
+        pass
+    else:
+        # calc
+        all_summaries.append(workflow.calc_annual_summary(year))
+
+    return render(request, 'summaries/annual/table.html', {
+        'title': f"{year} Annual Summary",
+        'all_summaries': all_summaries
+        })
 
 def summaries_annual_html(request, year):
     return render(request, 'index.html', { 'title': "Home" })
