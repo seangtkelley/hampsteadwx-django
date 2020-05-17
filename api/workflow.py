@@ -97,9 +97,9 @@ def calc_annual_summary(year):
 
     # add annual specific fields
     normals = get_normals()
-    summary['avg_temp_dfn'] = summary.avg_temp - normals.temp[12]
-    summary['precip_dfn'] = summary.precip - normals.precip[12]
-    summary['sf_dfn'] = summary.sf - normals.sf[12]
+    summary['avg_temp_dfn'] = summary['avg_temp'] - normals['temp'][12]
+    summary['precip_dfn'] = summary['precip'] - normals['precip'][12]
+    summary['sf_dfn'] = summary['sf'] - normals['sf'][12]
 
     return summary
 
