@@ -3,10 +3,10 @@
 {% load custom_tags %}
 
 {% block content %}
-<div style="min-height: 500px; width: 100%;">
+<div class="container" style="min-height: 500px; max-width: 960px;">
 
     {% if monthly_summary is not None %}
-    <div class="row better-row" style="max-width: 960px;">
+    <div class="row better-row">
 
         <div class="col-xs-2 col-sm-2 col-md-2 col-lg-2" style="min-height: 25px; text-align: center; padding-top: 20px;">
             <h3>{{ monthly_summary.date|date:'F' }}</h3>
