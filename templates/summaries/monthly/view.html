@@ -239,8 +239,8 @@
         chart.draw(dataTable, options);
     }
 
-    function viewTextmonthly_summary() {
-        $('#textmonthly_summary').show();
+    function viewTextSummary() {
+        $('#textSummary').show();
         $('#charts').hide();
         $('#textBtn').attr('disabled', 'disabled');
         $('#chartsBtn').removeAttr('disabled');
@@ -266,13 +266,13 @@
         }
     }
     $(document).ready(function () {
-        $('#textSummaryiFrame').load(function () {
+        $('#textSummaryiFrame').on('load', function () {
             iframeLoaded();
         });
 
         $('#textBtn').attr('disabled', 'disabled');
 
-        $(window).resize(function () {
+        $(window).on('resize', function () {
             drawMinMaxChart();
             drawPrecipChart();
             drawSnowfallChart();

@@ -269,13 +269,13 @@
         }
     }
     $(document).ready(function () {
-        $('#textSummaryiFrame').load(function () {
+        $('#textSummaryiFrame').on('load', function () {
             iframeLoaded();
         });
 
         $('#textBtn').attr('disabled', 'disabled');
 
-        $(window).resize(function () {
+        $(window).on('resize', function () {
             drawAvgChart();
             drawPrecipChart();
             drawGrtsPrecipChart();

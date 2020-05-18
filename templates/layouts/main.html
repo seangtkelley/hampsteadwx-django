@@ -37,7 +37,7 @@
         $(document).ready(function () {
             $("#alerts").width($("#main-content").width() * 0.5).css("left", $("#main-content").width() * 0.25);
 
-            $(window).resize(function () {
+            $(window).on('resize', function () {
                 $("#alerts").width($("#main-content").width() * 0.5).css("left", $("#main-content").width() * 0.25);
             });
 
@@ -156,7 +156,7 @@
                     $("#main-content").height($(window).height() - $("#footer").height() - $(".navbar").height() - 1);
                 }
 
-                $(window).resize(function () {
+                $(window).on('resize', function () {
                     if (($("#main-content").height() + $("#footer").height() + $(".navbar").height()) < $(window).height()) {
                         $("#main-content").height($(window).height() - $("#footer").height() - $(".navbar").height() - 1);
                     }

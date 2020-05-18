@@ -64,7 +64,7 @@
             google.visualization.events.addListener(chart, 'onmouseover', myHandler);
         }
 
-        $(window).resize(function () {
+        $(window).on('resize', function () {
             drawChart();
         });
     });
