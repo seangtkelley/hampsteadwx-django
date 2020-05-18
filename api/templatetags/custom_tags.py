@@ -67,22 +67,26 @@ def floor(value):
 
 @register.filter
 def format_trace(value, arg):
-    if float(value) == 0.001:
-        if arg == 'dec':
-            # for graphs
-            return 0.01
-        elif 'str' in arg:
-            return "Trace"
+    try:
+        if float(value) == 0.001:
+            if arg == 'dec':
+                # for graphs
+                return 0.01
+            elif 'str' in arg:
+                return "Trace"
+            else:
+                return ""
         else:
-            return ""
-    else:
-        if 'precip' in arg:
-            return round(Decimal(value), 2)
-        elif 'snow' in arg:
-            return round(Decimal(value), 1)
-        else:
-            return Decimal(value)
-
+            if 'precip' in arg:
+                return round(Decimal(value), 2)
+            elif 'snow' in arg:
+                return round(Decimal(value), 1)
+            else:
+                return Decimal(value)
+                
+    except Exception as e:
+        return str(e)
+    
 @register.filter
 def format_dfn(value):
     if float(value) > 0:
