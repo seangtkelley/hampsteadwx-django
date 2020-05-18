@@ -153,9 +153,13 @@ def summaries_annual_text(request, year):
         # calc
         annual_summary = workflow.calc_annual_summary(year)
 
+    normals = workflow.get_normals()
     return render(request, 'summaries/annual/text.html', {
         'title': f"{year} Annual Summary",
-        'annual_summary': annual_summary
+        'annual_summary': annual_summary,
+        'AVG_TEMP': normals['temp'][12],
+        'AVG_PRECIP': normals['precip'][12],
+        'AVG_SNFL': normals['sf'][12],
         })
 
 def summaries_annual_table(request, year):

@@ -27,8 +27,8 @@
         </div>
 
         <div class="col-xs-1 col-sm-1 col-md-1 col-lg-1" style="min-height: 20px"></div>
-        <div class="col-xs-4 col-sm-4 col-md-3 col-lg-3" style="min-height: 20px;">Average Maximum: {{ annual_summary.max_temp_avg }}</div>
-        <div class="col-xs-3 col-sm-3 col-md-2 col-lg-2" style="min-height: 20px;">Highest: {{ annual_summary.max_temp }}</div>
+        <div class="col-xs-4 col-sm-4 col-md-3 col-lg-3" style="min-height: 20px;">Average Maximum: {{ annual_summary.max_temp_avg|floatformat:1 }}</div>
+        <div class="col-xs-3 col-sm-3 col-md-2 col-lg-2" style="min-height: 20px;">Highest: {{ annual_summary.max_temp|floatformat:1 }}</div>
         <div class="col-xs-4 col-sm-4 col-md-6 col-lg-6" style="min-height: 20px;">Dates: 
             {% for date in annual_summary.max_temp_dates %}
                 {{ date|date:'m/d/Y' }}
@@ -39,8 +39,8 @@
         </div>
 
         <div class="col-xs-1 col-sm-1 col-md-1 col-lg-1" style="min-height: 20px"></div>
-        <div class="col-xs-4 col-sm-4 col-md-3 col-lg-3" style="min-height: 20px;">Average Minimum: {{ annual_summary.min_temp_avg }}</div>
-        <div class="col-xs-3 col-sm-3 col-md-2 col-lg-2" style="min-height: 20px;">Lowest: {{ annual_summary.min_temp }}</div>
+        <div class="col-xs-4 col-sm-4 col-md-3 col-lg-3" style="min-height: 20px;">Average Minimum: {{ annual_summary.min_temp_avg|floatformat:1 }}</div>
+        <div class="col-xs-3 col-sm-3 col-md-2 col-lg-2" style="min-height: 20px;">Lowest: {{ annual_summary.min_temp|floatformat:1 }}</div>
         <div class="col-xs-4 col-sm-4 col-md-6 col-lg-6" style="min-height: 20px;">Dates: 
             {% for date in annual_summary.min_temp_dates %}
                 {{ date|date:'m/d/Y' }}
@@ -51,7 +51,7 @@
         </div>
 
         <div class="col-xs-1 col-sm-1 col-md-1 col-lg-1" style="min-height: 20px"></div>
-        <div class="col-xs-4 col-sm-4 col-md-3 col-lg-3" style="min-height: 20px;">Average: {{ annual_summary.avg_temp }}</div>
+        <div class="col-xs-4 col-sm-4 col-md-3 col-lg-3" style="min-height: 20px;">Average: {{ annual_summary.avg_temp|floatformat:1 }}</div>
         <div class="col-xs-6 col-sm-5 col-md-5 col-lg-5" style="min-height: 20px;">Total Heating Degree Days: {{ annual_summary.hdd_count }}</div>
         <div class="col-xs-1 col-sm-2 col-md-3 col-lg-3" style="min-height: 20px;"></div>
 
@@ -61,7 +61,7 @@
         <div class="col-xs-1 col-sm-2 col-md-3 col-lg-3" style="min-height: 20px;"></div>
 
         <div class="col-xs-1 col-sm-1 col-md-1 col-lg-1" style="min-height: 20px"></div>
-        <div class="col-xs-11 col-sm-11 col-md-11 col-lg-11" style="min-height: 20px;">Depart. from Normal: {{ annual_summary.avg_temp_dfn|format_dfn }}</div>
+        <div class="col-xs-11 col-sm-11 col-md-11 col-lg-11" style="min-height: 20px;">Depart. from Normal: {{ annual_summary.avg_temp_dfn|floatformat:1|format_dfn }}</div>
 
         <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12" style="min-height: 5px;"></div>
 
@@ -71,15 +71,15 @@
         </div>
 
         <div class="col-xs-2 col-sm-2 col-md-2 col-lg-2" style="min-height: 20px"></div>
-        <div class="col-xs-2 col-sm-2 col-md-1 col-lg-1" style="min-height: 20px;"><b>Maximums:</b> </div>
+        <div class="col-xs-2 col-sm-2 col-md-2 col-lg-2" style="min-height: 20px;"><b>Maximums:</b> </div>
         <div class="col-xs-3 col-sm-3 col-md-2 col-lg-2" style="min-height: 20px;"> 90 or greater: {{ annual_summary.max_temp_grtr90_count }}</div>
-        <div class="col-xs-2 col-sm-2 col-md-1 col-lg-1" style="min-height: 20px;"><b>Minimums:</b> </div>
-        <div class="col-xs-3 col-sm-3 col-md-6 col-lg-6" style="min-height: 20px;"> 32 or lower: {{ annual_summary.min_temp_less32_count }}</div>
+        <div class="col-xs-2 col-sm-2 col-md-2 col-lg-2" style="min-height: 20px;"><b>Minimums:</b> </div>
+        <div class="col-xs-3 col-sm-3 col-md-4 col-lg-4" style="min-height: 20px;"> 32 or lower: {{ annual_summary.min_temp_less32_count }}</div>
 
-        <div class="col-xs-4 col-sm-4 col-md-3 col-lg-3" style="min-height: 20px"></div>
+        <div class="col-xs-4 col-sm-4 col-md-4 col-lg-4" style="min-height: 20px"></div>
         <div class="col-xs-3 col-sm-3 col-md-2 col-lg-2" style="min-height: 20px;"> 32 or lower: {{ annual_summary.max_temp_less32_count }}</div>
-        <div class="col-xs-2 col-sm-2 col-md-1 col-lg-1" style="min-height: 20px;"></div>
-        <div class="col-xs-3 col-sm-3 col-md-6 col-lg-6" style="min-height: 20px;"> 0 or lower: {{ annual_summary.min_temp_less0_count }}</div>
+        <div class="col-xs-2 col-sm-2 col-md-2 col-lg-2" style="min-height: 20px;"></div>
+        <div class="col-xs-3 col-sm-3 col-md-4 col-lg-4" style="min-height: 20px;"> 0 or lower: {{ annual_summary.min_temp_less0_count }}</div>
 
         <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12" style="margin-top: 10px; min-height: 5px; border-top: 1px solid grey;"></div>
 
@@ -94,11 +94,11 @@
         <div class="col-xs-11 col-sm-11 col-md-11 col-lg-11" style="min-height: 20px;">Mean Total: {{ AVG_PRECIP }}</div>
 
         <div class="col-xs-1 col-sm-1 col-md-1 col-lg-1" style="min-height: 20px"></div>
-        <div class="col-xs-11 col-sm-11 col-md-11 col-lg-11" style="min-height: 20px;">Depart. from Normal: {{ annual_summary.precip_dfn|format_dfn }}</div>
+        <div class="col-xs-11 col-sm-11 col-md-11 col-lg-11" style="min-height: 20px;">Depart. from Normal: {{ annual_summary.precip_dfn|floatformat:2|format_dfn }}</div>
 
         <div class="col-xs-1 col-sm-1 col-md-1 col-lg-1" style="min-height: 20px"></div>
-        <div class="col-xs-4 col-sm-3 col-md-2 col-lg-2" style="min-height: 20px;">Greatest Day: {{ annual_summary.grtst_precip|format_trace:'str:precip' }}</div>
-        <div class="col-xs-7 col-sm-8 col-md-9 col-lg-9" style="min-height: 20px;">Dates: 
+        <div class="col-xs-4 col-sm-3 col-md-3 col-lg-3" style="min-height: 20px;">Greatest Day: {{ annual_summary.grtst_precip|format_trace:'str:precip' }}</div>
+        <div class="col-xs-7 col-sm-8 col-md-8 col-lg-8" style="min-height: 20px;">Dates: 
             {% for date in annual_summary.grtst_precip_dates %}
                 {{ date|date:'m/d/Y' }}
                 {% if not forloop.last %}
@@ -115,7 +115,7 @@
         </div>
 
         <div class="col-xs-1 col-sm-2 col-md-2 col-lg-2" style="min-height: 20px"></div>
-        <div class="col-xs-4 col-sm-3 col-md-3 col-lg-3" style="min-height: 20px;"> A trace or more:{{ annual_summary.precip_grtrT }}</div>
+        <div class="col-xs-4 col-sm-3 col-md-3 col-lg-3" style="min-height: 20px;"> A trace or more: {{ annual_summary.precip_grtrT }}</div>
         <div class="col-xs-4 col-sm-3 col-md-3 col-lg-3" style="min-height: 20px;"> 0.01" or greater: {{ annual_summary.precip_grtr01 }}</div>
         <div class="col-xs-3 col-sm-4 col-md-4 col-lg-4" style="min-height: 20px;"> 0.10" or greater: {{ annual_summary.precip_grtr10 }}</div>
 
@@ -136,7 +136,7 @@
         <div class="col-xs-11 col-sm-11 col-md-11 col-lg-11" style="min-height: 20px;">Mean Total: {{ AVG_SNFL }}</div>
 
         <div class="col-xs-1 col-sm-1 col-md-1 col-lg-1" style="min-height: 20px"></div>
-        <div class="col-xs-11 col-sm-11 col-md-11 col-lg-11" style="min-height: 20px;">Departure from Normal: {{ annual_summary.sf_dfn|format_dfn }}</div>
+        <div class="col-xs-11 col-sm-11 col-md-11 col-lg-11" style="min-height: 20px;">Departure from Normal: {{ annual_summary.sf_dfn|floatformat:1|format_dfn }}</div>
 
         <div class="col-xs-1 col-sm-1 col-md-1 col-lg-1" style="min-height: 20px"></div>
         <div class="col-xs-5 col-sm-4 col-md-3 col-lg-3" style="min-height: 20px;">Greatest Snowfall: {{ annual_summary.grtst_sf|format_trace:'str:snow' }}</div>
