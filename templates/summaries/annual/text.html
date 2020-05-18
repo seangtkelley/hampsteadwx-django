@@ -31,10 +31,7 @@
         <div class="col-xs-3 col-sm-3 col-md-2 col-lg-2" style="min-height: 20px;">Highest: {{ annual_summary.max_temp|floatformat:1 }}</div>
         <div class="col-xs-4 col-sm-4 col-md-6 col-lg-6" style="min-height: 20px;">Dates: 
             {% for date in annual_summary.max_temp_dates %}
-                {{ date|date:'m/d/Y' }}
-                {% if not forloop.last %}
-                    ,
-                {% endif %}
+                {{ date|date:'m/d/Y' }}{% if not forloop.last %}, {% endif %}
             {% endfor %}
         </div>
 
@@ -43,10 +40,7 @@
         <div class="col-xs-3 col-sm-3 col-md-2 col-lg-2" style="min-height: 20px;">Lowest: {{ annual_summary.min_temp|floatformat:1 }}</div>
         <div class="col-xs-4 col-sm-4 col-md-6 col-lg-6" style="min-height: 20px;">Dates: 
             {% for date in annual_summary.min_temp_dates %}
-                {{ date|date:'m/d/Y' }}
-                {% if not forloop.last %}
-                    ,
-                {% endif %}
+                {{ date|date:'m/d/Y' }}{% if not forloop.last %}, {% endif %}
             {% endfor %}
         </div>
 
@@ -100,10 +94,7 @@
         <div class="col-xs-4 col-sm-3 col-md-3 col-lg-3" style="min-height: 20px;">Greatest Day: {{ annual_summary.grtst_precip|format_trace:'str:precip' }}</div>
         <div class="col-xs-7 col-sm-8 col-md-8 col-lg-8" style="min-height: 20px;">Dates: 
             {% for date in annual_summary.grtst_precip_dates %}
-                {{ date|date:'m/d/Y' }}
-                {% if not forloop.last %}
-                    ,
-                {% endif %}
+                {{ date|date:'m/d/Y' }}{% if not forloop.last %}, {% endif %}
             {% endfor %}
         </div>
 
@@ -142,10 +133,7 @@
         <div class="col-xs-5 col-sm-4 col-md-3 col-lg-3" style="min-height: 20px;">Greatest Snowfall: {{ annual_summary.grtst_sf|format_trace:'str:snow' }}</div>
         <div class="col-xs-6 col-sm-7 col-md-8 col-lg-8" style="min-height: 20px;">Dates: 
             {% for date in annual_summary.grtst_sf_dates %}
-                {{ date|date:'m/d/Y' }}
-                {% if not forloop.last %}
-                    ,
-                {% endif %}
+                {{ date|date:'m/d/Y' }}{% if not forloop.last %}, {% endif %}
             {% endfor %}
         </div>
 
@@ -153,10 +141,7 @@
         <div class="col-xs-5 col-sm-4 col-md-3 col-lg-3" style="min-height: 20px;">Greatest Snow Depth: {{ annual_summary.grtst_sd|format_trace:'str:snow' }}</div>
         <div class="col-xs-5 col-sm-6 col-md-7 col-lg-7" style="min-height: 20px;">Dates: 
             {% for date in annual_summary.grtst_sd_dates %}
-                {{ date|date:'m/d/Y' }}
-                {% if not forloop.last %}
-                    ,
-                {% endif %}
+                {{ date|date:'m/d/Y' }}{% if not forloop.last %}, {% endif %}
             {% endfor %}
         </div>
 
