@@ -62,6 +62,10 @@ li {
     width: 100%;
 }
 
+#charts {
+    width: 100%;
+}
+
 #textSummaryiFrame {
     width: 100%;
     min-height: 750px;

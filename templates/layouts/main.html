@@ -150,19 +150,6 @@
     </div>
 
     <div id="footer" class="footer">
-        <script defer>
-            $(document).ready(function () {
-                if (($("#main-content").height() + $("#footer").height() + $(".navbar").height()) < $(window).height()) {
-                    $("#main-content").height($(window).height() - $("#footer").height() - $(".navbar").height() - 1);
-                }
-
-                $(window).on('resize', function () {
-                    if (($("#main-content").height() + $("#footer").height() + $(".navbar").height()) < $(window).height()) {
-                        $("#main-content").height($(window).height() - $("#footer").height() - $(".navbar").height() - 1);
-                    }
-                });
-            });
-        </script>
         <div class="card card-body bg-light">
             <div class="container">
                 <div class="row better-row text-center">
