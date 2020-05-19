@@ -78,9 +78,9 @@ def format_trace(value, arg):
                 return ""
         else:
             if 'precip' in arg:
-                return round(Decimal(value), 2)
+                return f"{Decimal(value):.2f}"
             elif 'snow' in arg:
-                return round(Decimal(value), 1)
+                return f"{Decimal(value):.1f}"
             else:
                 return Decimal(value)
                 

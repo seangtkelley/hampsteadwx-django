@@ -34,7 +34,7 @@
         dataTable.addRows([
 
             {% for summary in monthly_summaries %}
-                [ '{{ summary.date|date:'M' }}', {{ summary.avg_temp }}, {{ summary.avg_temp_dfn }} ],
+                [ '{{ summary.date|date:'M' }}', {{ summary.avg_temp|floatformat:1 }}, {{ summary.avg_temp_dfn|floatformat:1 }} ],
             {% endfor %}
 
         ]);
@@ -71,7 +71,7 @@
         dataTable.addRows([
 
             {% for summary in monthly_summaries %}
-                [ '{{ summary.date|date:'M' }}', {{ summary.precip }}, {{ summary.precip_dfn }} ],
+                [ '{{ summary.date|date:'M' }}', {{ summary.precip|format_trace:'dec:precip' }}, {{ summary.precip_dfn|floatformat:2 }} ],
             {% endfor %}
 
         ]);
@@ -114,10 +114,7 @@
                     `<div style="margin: 5px;">
                         <h4 style="border-bottom: 1px solid grey;"> 
                             {% for date in summary.grtst_precip_dates %}
-                                {{ date|date:'m/d/Y' }}
-                                {% if not forloop.last %}
-                                    ,
-                                {% endif %}
+                                {{ date|date:'m/d/Y' }}{% if not forloop.last %}, {% endif %}
                             {% endfor %}
                         </h4>
                         {{ summary.grtst_precip|format_trace:'str:precip' }}
@@ -207,10 +204,7 @@
                     `<div style="margin: 5px;">
                         <h4 style="border-bottom: 1px solid grey;"> 
                             {% for date in summary.grtst_sd_dates %}
-                                {{ date|date:'m/d/Y' }}
-                                {% if not forloop.last %}
-                                    ,
-                                {% endif %}
+                                {{ date|date:'m/d/Y' }}{% if not forloop.last %}, {% endif %}
                             {% endfor %}
                         </h4>
                         {{ summary.grtst_sd|format_trace:'str:snow' }}

@@ -59,18 +59,14 @@
                 viewWindowMode: 'explicit',
                 viewWindow: {
                     max: {{ monthly_summary.max_temp|divide:'10'|ceil|multiply:'10' }},
-                    min: {% if monthly_summary.min_temp < 0 %}
-                        {{ monthly_summary.min_temp|divide:'10'|floor|multiply:'10' }}
-                    {% else %}
-                        0
-                    {% endif %}
+                    min: {% if monthly_summary.min_temp < 0 %} {{ monthly_summary.min_temp|divide:'10'|floor|multiply:'10' }} {% else %} 0 {% endif %}
                 },
                 gridlines: {
-                    count: {% if monthly_summary.min_temp < 0 %}
-                        {{ monthly_summary.max_temp|sub:monthly_summary.min_temp|divide:'10'|ceil|multiply:'10'|divide:'5'|add:'2' }}
-                    {% else %}
-                        {{ monthly_summary.max_temp|divide:'10'|ceil|multiply:'10'|divide:'5' }}
-                    {% endif %}
+                    count:  {% if monthly_summary.min_temp < 0 %}
+                                {{ monthly_summary.max_temp|sub:monthly_summary.min_temp|divide:'10'|ceil|multiply:'10'|divide:'5'|add:'2' }}
+                            {% else %}
+                                {{ monthly_summary.max_temp|divide:'10'|ceil|multiply:'10'|divide:'5' }}
+                            {% endif %}
                 }
             },
             hAxis: {
