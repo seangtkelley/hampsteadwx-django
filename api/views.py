@@ -11,10 +11,10 @@ from . import models
 def index(request):
     return render(request, 'index.html', { 'title': "Home" })
 
-def info(request):
+def info_view(request):
     return render(request, 'info.html', { 'title': "Info" })
 
-def normals(request):
+def normals_view(request):
     return render(request, 'normals.html', { 'title': "Normals" })
 
 
@@ -48,6 +48,7 @@ def summaries_monthly_submit(request):
                 # process csv
                 year, month = workflow.process_csv(filepath)
                 
+                # TODO: create alert that prompts for redirect
                 # redirect
                 redirect('summaries_monthly_view', year=year, month=month)
             

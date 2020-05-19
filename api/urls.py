@@ -9,8 +9,8 @@ urlpatterns = [
     # basic pages
     path('', views.index, name='index'),
     path('home', views.index, name='home'),
-    path('info', views.info, name='info'),
-    path('normals', views.normals, name='normals'),
+    path('info', views.info_view, name='info'),
+    path('normals', views.normals_view, name='normals'),
 
     # photos
     path('photos', views.photos_home, name='photos_home'),
