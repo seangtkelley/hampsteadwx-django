@@ -83,7 +83,7 @@ def calc_monthly_summary(year, month):
     if month >= 10:
         summary['sf_todate'] = models.DailyOb.objects.filter(date__year=year, date__month__in=list(range(10, month+1))).exclude(snowfall=0.001).aggregate(Sum('snowfall'))['snowfall__sum'] # same as above
 
-        summary['sf_todate_dfn'] = summary['sf_todate'] - sum(normals['sf'][10:month+1])
+        summary['sf_todate_dfn'] = summary['sf_todate'] - sum(normals['sf'][9:month])
 
     elif month <= 5:
         # get last year's snow
@@ -94,6 +94,9 @@ def calc_monthly_summary(year, month):
         summary['sf_todate'] += models.DailyOb.objects.filter(date__year=year, date__month__in=list(range(1, month+1))).exclude(snowfall=0.001).aggregate(Sum('snowfall'))['snowfall__sum']
 
         summary['sf_todate_dfn'] = summary['sf_todate'] - sum(normals['sf'][9:12]) - sum(normals['sf'][:month])
+    else:
+        summary['sf_todate'] = 0
+        summary['sf_todate_dfn'] = 0
     
     return summary
 
