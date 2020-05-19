@@ -21,14 +21,12 @@ urlpatterns = [
     path('summaries/monthly/<int:year>/<int:month>/', views.summaries_monthly_view, name='summaries_monthly_view'),
     path('summaries/monthly/<int:year>/<int:month>/text', views.summaries_monthly_text, name='summaries_monthly_text'),
     path('summaries/monthly/<int:year>/<int:month>/csv', views.summaries_monthly_csv, name='summaries_monthly_csv'),
-    path('summaries/monthly/<int:year>/<int:month>/html', views.summaries_monthly_html, name='summaries_monthly_html'),
     path('summaries/monthly/submit', views.summaries_monthly_submit, name='summaries_monthly_submit'),
 
     path('summaries/annual', views.summaries_annual_home, name='summaries_annual_home'),
     path('summaries/annual/<int:year>', views.summaries_annual_view, name='summaries_annual_view'),
     path('summaries/annual/<int:year>/text', views.summaries_annual_text, name='summaries_annual_text'),
     path('summaries/annual/<int:year>/table', views.summaries_annual_table, name='summaries_annual_table'),
-    path('summaries/annual/<int:year>/html', views.summaries_annual_html, name='summaries_annual_html'),
 
     path('summaries/snowseason', views.summaries_snowseason_view, name='summaries_snowseason_view'),
     path('summaries/snowseason/<slug:season>', views.summaries_snowseason_season, name='summaries_snowseason_season'),

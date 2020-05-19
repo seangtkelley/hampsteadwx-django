@@ -1,5 +1,7 @@
-from django.shortcuts import render, redirect
 import os
+
+from django.shortcuts import render, redirect
+from django.http import HttpResponse, Http404
 
 from boilerplate.settings import BASE_DIR
 from . import utils
@@ -109,10 +111,22 @@ def summaries_monthly_text(request, year, month):
         })
 
 def summaries_monthly_csv(request, year, month):
-    return render(request, 'index.html', { 'title': "Home" })
+    # get summary
+    if models.MonthlyOb.objects.filter(date__year=year, date__month=month).exists():
+        # from database
+        summary = models.MonthlyOb.objects.filter(date__year=year, date__month=month)
+    else:
+        # calc
+        summary = workflow.calc_monthly_summary(year, month)
 
-def summaries_monthly_html(request, year, month):
-    return render(request, 'index.html', { 'title': "Home" })
+    if os.path.exists(summary['csv_filepath']):
+        # read csv and build response
+        with open(summary['csv_filepath'], 'r') as fh:
+            response = HttpResponse(fh.read(), content_type="text/csv")
+            response['Content-Disposition'] = f"attachment; filename={summary['csv_filepath'].split('/')[-1]}"
+            return response
+    # csv not found
+    raise Http404
 
 
 def summaries_annual_home(request):
@@ -188,9 +202,6 @@ def summaries_annual_table(request, year):
         'title': f"{year} Annual Summary",
         'all_summaries': all_summaries
         })
-
-def summaries_annual_html(request, year):
-    return render(request, 'index.html', { 'title': "Home" })
 
 
 def summaries_snowseason_view(request):

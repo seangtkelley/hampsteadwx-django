@@ -68,6 +68,9 @@ def calc_monthly_summary(year, month):
     # calc general
     summary = calc_general_summary(df)
 
+    # add meta
+    summary['csv_filepath'] = df.iloc[0].csv_filepath
+
     # add month specific fields
     normals = get_normals()
     summary['avg_temp_dfn'] = summary['avg_temp'] - normals['temp'][month-1]
