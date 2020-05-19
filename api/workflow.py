@@ -74,14 +74,26 @@ def calc_monthly_summary(year, month):
     summary['precip_dfn'] = summary['precip'] - normals['precip'][month-1]
     summary['sf_dfn'] = summary['sf'] - normals['sf'][month-1]
 
-    precip_todate = models.DailyOb.objects.filter(date__year=df.iloc[0].date.year).exclude(precip=0.001).aggregate(Sum('precip'))['precip__sum'] # sum over all of year precip except traces
+    # precip to date
+    precip_todate = models.DailyOb.objects.filter(date__year=year, date__month__in=list(range(1, month+1))).exclude(precip=0.001).aggregate(Sum('precip'))['precip__sum'] # sum over all precip except traces
     summary['precip_todate'] = precip_todate
     summary['precip_todate_dfn'] = precip_todate - sum(normals['precip'][:month])
 
-    # TODO: snowfall dfn is by snow season
-    # sf_todate = models.DailyOb.objects.filter(date__year=df.iloc[0].date.year).exclude(snowfall=0.001).aggregate(Sum('snowfall')) # sum over all of year snowfall except traces
-    summary['sf_todate'] = 0 #sf_todate
-    summary['sf_todate_dfn'] = 0 #sf_todate - sum(normals['sf'][:month])
+    # snowfall to date
+    if month >= 10:
+        summary['sf_todate'] = models.DailyOb.objects.filter(date__year=year, date__month__in=list(range(10, month+1))).exclude(snowfall=0.001).aggregate(Sum('snowfall'))['snowfall__sum'] # same as above
+
+        summary['sf_todate_dfn'] = summary['sf_todate'] - sum(normals['sf'][10:month+1])
+
+    elif month <= 5:
+        # get last year's snow
+        prev_year_sf = models.DailyOb.objects.filter(date__year=year-1, date__month__in=[10, 11, 12]).exclude(snowfall=0.001).aggregate(Sum('snowfall'))['snowfall__sum']
+        summary['sf_todate'] = 0 if not prev_year_sf else prev_year_sf # small check if we don't have prev year snowfall
+        
+        # get this year's snow
+        summary['sf_todate'] += models.DailyOb.objects.filter(date__year=year, date__month__in=list(range(1, month+1))).exclude(snowfall=0.001).aggregate(Sum('snowfall'))['snowfall__sum']
+
+        summary['sf_todate_dfn'] = summary['sf_todate'] - sum(normals['sf'][9:12]) - sum(normals['sf'][:month])
     
     return summary
 
