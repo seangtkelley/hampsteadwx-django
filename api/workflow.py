@@ -6,7 +6,7 @@ import pandas as pd
 from django.db.models import Sum
 
 from . import models
-from boilerplate.settings import BASE_DIR
+from boilerplate.settings import BASE_DIR, TRACE_VAL
 
 
 def get_normals():
@@ -35,9 +35,9 @@ def process_csv(filepath):
             ob.atob_temp = Decimal(row['TA'])
 
             # 0.001 for trace values
-            ob.precip = Decimal(0.001) if row['PP'] == 'T' else Decimal(row['PP'])
-            ob.snowfall = Decimal(0.001) if row['SF'] == 'T' else Decimal(row['SF'])
-            ob.snowdepth = Decimal(0.001) if row['SD'] == 'T' else Decimal(row['SD'])
+            ob.precip = Decimal(TRACE_VAL) if row['PP'] == 'T' else Decimal(row['PP'])
+            ob.snowfall = Decimal(TRACE_VAL) if row['SF'] == 'T' else Decimal(row['SF'])
+            ob.snowdepth = Decimal(TRACE_VAL) if row['SD'] == 'T' else Decimal(row['SD'])
             
             ob.save()
         else:
@@ -49,9 +49,9 @@ def process_csv(filepath):
                 atob_temp=Decimal(row['TA']),
 
                 # 0.001 for trace values
-                precip=Decimal(0.001) if row['PP'] == 'T' else Decimal(row['PP']),
-                snowfall=Decimal(0.001) if row['SF'] == 'T' else Decimal(row['SF']),
-                snowdepth=Decimal(0.001) if row['SD'] == 'T' else Decimal(row['SD'])
+                precip=Decimal(TRACE_VAL) if row['PP'] == 'T' else Decimal(row['PP']),
+                snowfall=Decimal(TRACE_VAL) if row['SF'] == 'T' else Decimal(row['SF']),
+                snowdepth=Decimal(TRACE_VAL) if row['SD'] == 'T' else Decimal(row['SD'])
             )
 
             ob.save()
@@ -75,23 +75,23 @@ def calc_monthly_summary(year, month):
     summary['sf_dfn'] = summary['sf'] - normals['sf'][month-1]
 
     # precip to date
-    precip_todate = models.DailyOb.objects.filter(date__year=year, date__month__in=list(range(1, month+1))).exclude(precip=0.001).aggregate(Sum('precip'))['precip__sum'] # sum over all precip except traces
+    precip_todate = models.DailyOb.objects.filter(date__year=year, date__month__in=list(range(1, month+1))).exclude(precip=TRACE_VAL).aggregate(Sum('precip'))['precip__sum'] # sum over all precip except traces
     summary['precip_todate'] = precip_todate
     summary['precip_todate_dfn'] = precip_todate - sum(normals['precip'][:month])
 
     # snowfall to date
     if month >= 10:
-        summary['sf_todate'] = models.DailyOb.objects.filter(date__year=year, date__month__in=list(range(10, month+1))).exclude(snowfall=0.001).aggregate(Sum('snowfall'))['snowfall__sum'] # same as above
+        summary['sf_todate'] = models.DailyOb.objects.filter(date__year=year, date__month__in=list(range(10, month+1))).exclude(snowfall=TRACE_VAL).aggregate(Sum('snowfall'))['snowfall__sum'] # same as above
 
         summary['sf_todate_dfn'] = summary['sf_todate'] - sum(normals['sf'][9:month])
 
     elif month <= 5:
         # get last year's snow
-        prev_year_sf = models.DailyOb.objects.filter(date__year=year-1, date__month__in=[10, 11, 12]).exclude(snowfall=0.001).aggregate(Sum('snowfall'))['snowfall__sum']
+        prev_year_sf = models.DailyOb.objects.filter(date__year=year-1, date__month__in=[10, 11, 12]).exclude(snowfall=TRACE_VAL).aggregate(Sum('snowfall'))['snowfall__sum']
         summary['sf_todate'] = 0 if not prev_year_sf else prev_year_sf # small check if we don't have prev year snowfall
         
         # get this year's snow
-        summary['sf_todate'] += models.DailyOb.objects.filter(date__year=year, date__month__in=list(range(1, month+1))).exclude(snowfall=0.001).aggregate(Sum('snowfall'))['snowfall__sum']
+        summary['sf_todate'] += models.DailyOb.objects.filter(date__year=year, date__month__in=list(range(1, month+1))).exclude(snowfall=TRACE_VAL).aggregate(Sum('snowfall'))['snowfall__sum']
 
         summary['sf_todate_dfn'] = summary['sf_todate'] - sum(normals['sf'][9:12]) - sum(normals['sf'][:month])
     else:
@@ -147,22 +147,22 @@ def calc_general_summary(df):
         'cdd_count': abs(round(sum(df[(df[['max_temp', 'min_temp']].mean(axis=1) - 65) < 0][['max_temp', 'min_temp']].mean(axis=1) - 65))),
 
         # precip fields
-        'precip': 0.001 if Decimal(df.precip.max()) == 0.001 else Decimal(sum(df[df.precip != 0.001].precip)),
+        'precip': TRACE_VAL if Decimal(df.precip.max()) == TRACE_VAL else Decimal(sum(df[df.precip != TRACE_VAL].precip)),
         
         'grtst_precip': Decimal(df.precip.max()),
         'grtst_precip_dates': [] if df.precip.max() == 0 else list(df[df.precip == df.precip.max()].date),
-        'precip_grtrT': len(df[df.precip > 0.001]), # trace (T)
+        'precip_grtrT': len(df[df.precip > TRACE_VAL]), # trace (T)
         'precip_grtr01': len(df[df.precip > 0.01]), # 01 = 0.01"
         'precip_grtr10': len(df[df.precip > 0.10]), # 10 = 0.10"
         'precip_grtr50': len(df[df.precip > 0.50]),
         'precip_grtr100': len(df[df.precip > 1.00]),
 
         # snowfall and snowdepth fields
-        'sf': 0.001 if Decimal(df.snowfall.max()) == 0.001 else Decimal(sum(df[df.snowfall != 0.001].snowfall)),
+        'sf': TRACE_VAL if Decimal(df.snowfall.max()) == TRACE_VAL else Decimal(sum(df[df.snowfall != TRACE_VAL].snowfall)),
 
         'grtst_sf': Decimal(df.snowfall.max()),
         'grtst_sf_dates': [] if df.snowfall.max() == 0 else list(df[df.snowfall == df.snowfall.max()].date),
-        'sf_grtrT': len(df[df.snowfall > 0.001]),
+        'sf_grtrT': len(df[df.snowfall > TRACE_VAL]),
         'sf_grtr1': len(df[df.snowfall > 1]), # in.
         'sf_grtr3': len(df[df.snowfall > 3]),
         'sf_grtr6': len(df[df.snowfall > 6]),
@@ -171,7 +171,7 @@ def calc_general_summary(df):
 
         'grtst_sd': Decimal(df.snowdepth.max()),
         'grtst_sd_dates': [] if df.snowdepth.max() == 0 else list(df[df.snowdepth == df.snowdepth.max()].date),
-        'sd_grtrT': len(df[df.snowdepth > 0.001]),
+        'sd_grtrT': len(df[df.snowdepth > TRACE_VAL]),
         'sd_grtr1': len(df[df.snowdepth > 1]), # in.
         'sd_grtr3': len(df[df.snowdepth > 3]),
         'sd_grtr6': len(df[df.snowdepth > 6]),

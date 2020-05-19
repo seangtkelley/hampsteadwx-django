@@ -110,6 +110,9 @@ STATICFILES_DIRS = (
 # X Frame options
 X_FRAME_OPTIONS = 'SAMEORIGIN'
 
+# trace value
+TRACE_VAL = 0.001
+
 
 # secret settings
 from .settings_secret import *

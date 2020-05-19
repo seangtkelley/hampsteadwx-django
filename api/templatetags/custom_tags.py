@@ -4,6 +4,8 @@ import math
 
 from django import template
 
+from boilerplate.settings import TRACE_VAL
+
 register = template.Library()
 
 numeric_test = re.compile(r"^\d+$")
@@ -68,7 +70,7 @@ def floor(value):
 @register.filter
 def format_trace(value, arg):
     try:
-        if float(value) == 0.001:
+        if float(value) == TRACE_VAL:
             if arg == 'dec':
                 # for graphs
                 return 0.01
