@@ -48,21 +48,31 @@ def summaries_monthly_submit(request):
                         dest.write(chunk)
 
                 # process csv
-                year, month = workflow.process_csv(filepath)
+                try:
+                    year, month = workflow.process_csv(filepath)
+                except Exception as e:
+                    return render(request, 'summaries/monthly/submit.html', { 
+                        'title': "Submit Monthly Summary",
+                        'alerts': [ utils.create_alert('danger', f"Error occurred while processing csv: <code>{str(e)}</code>") ]
+                        })
                 
-                # TODO: create alert that prompts for redirect
-                # redirect
-                redirect('summaries_monthly_view', year=year, month=month)
+                # prompt redirect
+                return render(request, 'summaries/monthly/submit.html', { 
+                    'title': "Submit Monthly Summary",
+                    'alerts': [ utils.create_alert('success', f"{utils.get_month_name(month)} {year} monthly data successfully processed. <a href='/summaries/monthly/{year}/{month}'>View summary <i class='fa fa-external-link'></i></a>") ]
+                    })
             
-            else: # TODO: better error handling
-                print('Wrong Password')
+            else:
+                return render(request, 'summaries/monthly/submit.html', { 
+                    'title': "Submit Monthly Summary",
+                    'alerts': [ utils.create_alert('danger', "Incorrect password") ]
+                    })
         
-        else: # TODO: better error handling
-            print('Invalid Form')
-
-    else:
-        # display form
-        pass
+        else:
+            return render(request, 'summaries/monthly/submit.html', { 
+                    'title': "Submit Monthly Summary",
+                    'alerts': [ utils.create_alert('danger', "Form data invalid.") ]
+                    })
 
     return render(request, 'summaries/monthly/submit.html', { 'title': "Submit Monthly Summary" })
 

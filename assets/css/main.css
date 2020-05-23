@@ -10,7 +10,7 @@ body {
 
 #alerts {
     position: absolute;
-    top: 58px;
+    top: 70px;
     z-index: 999999;
 }
 
@@ -70,4 +70,8 @@ li {
     width: 100%;
     min-height: 750px;
     border:none;
+}
+
+.page-title {
+    margin-top: 1rem;
 }
