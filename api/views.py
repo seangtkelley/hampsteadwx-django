@@ -82,16 +82,44 @@ def summaries_monthly_home(request):
 def summaries_monthly_view(request, year, month):
     if request.method == 'POST':
         # edit remarks
-        pass
+        form = forms.EditRemarks(request.POST)
+        if form.is_valid():
+            if form.cleaned_data['password'] == os.environ['SITE_PASS']:
+                # find summary
+                if models.MonthlyOb.objects.filter(date__year=year, date__month=month).exists():
+                    summary = models.MonthlyOb.objects.filter(date__year=year, date__month=month).first()
+                else:
+                    # calc
+                    summary = workflow.calc_monthly_summary(year, month, save_to_db=True)
 
-    else:
-        # display form
-        pass
+                # edit remarks
+                summary.remarks = form.cleaned_data['remarks']
+                summary.save()
+                
+                # display alert
+                return render(request, 'summaries/monthly/view.html', { 
+                    'title': f"{utils.get_month_name(month)} {year} Monthly Summary",
+                    'monthly_summary': summary,
+                    'daily_obs': models.DailyOb.objects.filter(date__year=year, date__month=month).order_by('date'),
+                    'alerts': [ utils.create_alert('success', f"{utils.get_month_name(month)} {year} remarks saved.") ]
+                    })
+            
+            else:
+                return render(request, 'summaries/monthly/view.html', { 
+                    'title': f"{utils.get_month_name(month)} {year} Monthly Summary",
+                    'alerts': [ utils.create_alert('danger', "Incorrect password") ]
+                    })
+        
+        else:
+            return render(request, 'summaries/monthly/view.html', { 
+                    'title': f"{utils.get_month_name(month)} {year} Monthly Summary",
+                    'alerts': [ utils.create_alert('danger', "Form data invalid.") ]
+                    })
 
     # get monthly summary
     if models.MonthlyOb.objects.filter(date__year=year, date__month=month).exists():
         # from database
-        summary = models.MonthlyOb.objects.filter(date__year=year, date__month=month)
+        summary = models.MonthlyOb.objects.filter(date__year=year, date__month=month).first()
     else:
         # calc
         summary = workflow.calc_monthly_summary(year, month)
@@ -106,7 +134,7 @@ def summaries_monthly_text(request, year, month):
     # get monthly summary
     if models.MonthlyOb.objects.filter(date__year=year, date__month=month).exists():
         # from database
-        summary = models.MonthlyOb.objects.filter(date__year=year, date__month=month)
+        summary = models.MonthlyOb.objects.filter(date__year=year, date__month=month).first()
     else:
         # calc
         summary = workflow.calc_monthly_summary(year, month)
@@ -124,17 +152,18 @@ def summaries_monthly_csv(request, year, month):
     # get summary
     if models.MonthlyOb.objects.filter(date__year=year, date__month=month).exists():
         # from database
-        summary = models.MonthlyOb.objects.filter(date__year=year, date__month=month)
+        summary = models.MonthlyOb.objects.filter(date__year=year, date__month=month).first()
     else:
         # calc
         summary = workflow.calc_monthly_summary(year, month)
 
-    if os.path.exists(summary['csv_filepath']):
+    if summary is not None and os.path.exists(summary['csv_filepath']):
         # read csv and build response
         with open(summary['csv_filepath'], 'r') as fh:
             response = HttpResponse(fh.read(), content_type="text/csv")
             response['Content-Disposition'] = f"attachment; filename={summary['csv_filepath'].split('/')[-1]}"
             return response
+            
     # csv not found
     raise Http404
 
@@ -146,7 +175,7 @@ def summaries_annual_view(request, year):
     # get annual summary
     if None is not None: # models.AnnualSummary.objects.filter(date__year=year).exists():
         # from database: TODO
-        # summary = models.AnnualSummary.objects.filter(date__year=year)
+        # summary = models.AnnualSummary.objects.filter(date__year=year).first()
         pass
     else:
         # calc
@@ -172,7 +201,7 @@ def summaries_annual_text(request, year):
     # get annual summary
     if None is not None: # models.AnnualSummary.objects.filter(date__year=year).exists():
         # from database: TODO
-        # summary = models.AnnualSummary.objects.filter(date__year=year)
+        # annual_summary = models.AnnualSummary.objects.filter(date__year=year).first()
         pass
     else:
         # calc
@@ -194,7 +223,7 @@ def summaries_annual_table(request, year):
     for month in range(1, 13):
         if models.MonthlyOb.objects.filter(date__year=year, date__month=month).exists():
             # from database
-            all_summaries.append(models.MonthlyOb.objects.filter(date__year=year, date__month=month))
+            all_summaries.append(models.MonthlyOb.objects.filter(date__year=year, date__month=month).first())
         elif models.DailyOb.objects.filter(date__year=year, date__month=month).count() > 0:
             # calc
             all_summaries.append(workflow.calc_monthly_summary(year, month))
@@ -202,7 +231,7 @@ def summaries_annual_table(request, year):
     # get annual summary
     if None is not None: # models.AnnualSummary.objects.filter(date__year=year).exists():
         # from database: TODO
-        # all_summaries.append(models.AnnualSummary.objects.filter(date__year=year))
+        # all_summaries.append(models.AnnualSummary.objects.filter(date__year=year).first())
         pass
     else:
         # calc

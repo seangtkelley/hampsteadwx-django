@@ -91,7 +91,10 @@ def format_trace(value, arg):
     
 @register.filter
 def format_dfn(value):
-    if float(value) > 0:
-        return '+' + str(value)
-    else:
-        return str(value)
+    try:
+        if float(value) > 0:
+            return '+' + str(value)
+        else:
+            return str(value)
+    except Exception as e:
+        return str(e)

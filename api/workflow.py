@@ -58,9 +58,11 @@ def process_csv(filepath):
 
     return df.iloc[0]['DATE'].year, df.iloc[0]['DATE'].month
 
-def calc_monthly_summary(year, month):
+def calc_monthly_summary(year, month, save_to_db=False):
     # get all daily obs from month
     obs = models.DailyOb.objects.filter(date__year=year, date__month=month).order_by('date')
+    if obs.count() == 0:
+        return None
 
     # convert to dataframe
     df = pd.DataFrame.from_records(obs.values())
@@ -101,7 +103,15 @@ def calc_monthly_summary(year, month):
         summary['sf_todate'] = 0
         summary['sf_todate_dfn'] = 0
     
-    return summary
+    if save_to_db:
+        if models.MonthlyOb.objects.filter(date=summary['date']).exists():
+            db_summary = models.MonthlyOb.objects.filter(date=summary['date']).first().update(**summary)
+        else:
+            db_summary = models.MonthlyOb.objects.create(**summary)
+        
+        return db_summary
+    else:
+        return summary
 
 def calc_annual_summary(year):
     # get all daily obs from year

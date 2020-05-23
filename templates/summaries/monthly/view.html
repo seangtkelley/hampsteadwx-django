@@ -387,16 +387,14 @@
             <iframe id="textSummaryiFrame" src="{% url 'summaries_monthly_text' year=monthly_summary.date.year month=monthly_summary.date.month %}"></iframe>
         </div>
         <div id="editRemarks" class="modal fade" tabindex="-1" role="dialog">
-            <div class="modal-dialog">
+            <div class="modal-dialog" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
+                        <h4 class="modal-title">Edit Remarks</h4>
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                                 aria-hidden="true">&times;</span></button>
-                        <h4 class="modal-title">Edit Remarks</h4>
                     </div>
-                    <form
-                        action="{% url 'summaries_monthly_view' year=monthly_summary.date.year month=monthly_summary.date.month %}"
-                        method="post">
+                    <form action="{% url 'summaries_monthly_view' year=monthly_summary.date.year month=monthly_summary.date.month %}" method="post">
                         {% csrf_token %}
                         <div class="modal-body">
                             <textarea name="remarks" rows="10" cols="70" style="margin-bottom: 10px;"
