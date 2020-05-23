@@ -38,15 +38,15 @@
     </tr>
     {% for summary in all_summaries %}
     <tr>
-        {% if summary|hasattr:'precip_todate' %}
-        <td>{{ summary.date|date:'F' }}</td>
-        {% else %}
+        {% if forloop.last %}
         <td>{{ summary.date.year }}</td>
+        {% else %}
+        <td>{{ summary.date|date:'F' }}</td>
         {% endif %}
-        <td>{{ summary.max_temp_avg }}</td>
-        <td>{{ summary.min_temp_avg }}</td>
-        <td>{{ summary.avg_temp }}</td>
-        <td>{{ summary.avg_temp_dfn|format_dfn }}</td>
+        <td>{{ summary.max_temp_avg|floatformat:1 }}</td>
+        <td>{{ summary.min_temp_avg|floatformat:1 }}</td>
+        <td>{{ summary.avg_temp|floatformat:1 }}</td>
+        <td>{{ summary.avg_temp_dfn|floatformat:1|format_dfn }}</td>
         <td>{{ summary.max_temp }}</td>
         <td>{{ summary.max_temp_dates|last|date:'m/d/Y' }}</td>
         <td>{{ summary.min_temp }}</td>
@@ -56,11 +56,11 @@
         <td>{{ summary.min_temp_less32_count }}</td>
         <td>{{ summary.min_temp_less0_count }}</td>
         <td>{{ summary.precip|format_trace:'str:precip' }}</td>
-        <td>{{ summary.precip_dfn|format_dfn }}</td>
-        <td>{{ summary.grtst_precip }}</td>
+        <td>{{ summary.precip_dfn|floatformat:2|format_dfn }}</td>
+        <td>{{ summary.grtst_precip|floatformat:2 }}</td>
         <td>{{ summary.grtst_precip_dates|last|date:'m/d/Y' }}</td>
         <td>{{ summary.sf|format_trace:'str:snow' }}</td>
-        <td>{{ summary.sf_dfn|format_dfn }}</td>
+        <td>{{ summary.sf_dfn|floatformat:1|format_dfn }}</td>
         <td>{{ summary.grtst_sf|format_trace:'str:snow' }}</td>
         <td>{{ summary.grtst_sf_dates|last|date:'m/d/Y' }}</td>
         <td>N/A</td>
