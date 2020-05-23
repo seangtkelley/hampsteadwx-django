@@ -14,13 +14,13 @@
                     <h4><b>Date<b></h4>
                 </th>
             </tr>
-            {% for summary in summaries %}
+            {% for peak in peaks %}
                 <tr>
                     <th style="text-align: center;">
-                        <h4>{{ summary.date.year }}</h4>
+                        <h4>{{ peak.date.year }}</h4>
                     </th>
                     <th style="text-align: center;">
-                        <h4>{{ summary.date|date:"M j, Y" }}</h4>
+                        <h4>{{ peak.date|date:"M j" }}</h4>
                     </th>
             </tr>
             {% endfor %}

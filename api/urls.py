@@ -32,10 +32,8 @@ urlpatterns = [
     path('summaries/snowseason/<slug:season>', views.summaries_snowseason_season, name='summaries_snowseason_season'),
 
     path('summaries/peakfoliage', views.summaries_peakfoliage_view, name='summaries_peakfoliage_view'),
-    path('summaries/peakfoliage/submit', views.summaries_peakfoliage_submit, name='summaries_peakfoliage_submit'),
 
     path('summaries/sunsetlake', views.summaries_sunsetlake_view, name='summaries_sunsetlake_view'),
-    path('summaries/sunsetlake/submit', views.summaries_sunsetlake_submit, name='summaries_sunsetlake_submit'),
 
     path('summaries/precip', views.summaries_precip_view, name='summaries_precip_view'),
     

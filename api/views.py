@@ -219,7 +219,7 @@ def summaries_annual_text(request, year):
 def summaries_annual_table(request, year):
     all_summaries = []
 
-    # get monthly summaries    
+    # get monthly summaries
     for month in range(1, 13):
         if models.MonthlyOb.objects.filter(date__year=year, date__month=month).exists():
             # from database
@@ -257,33 +257,14 @@ def summaries_snowseason_season(request, season):
 
 
 def summaries_peakfoliage_view(request):
-    return render(request, 'summaries/peakfoliage/view.html', { 'title': "Peak Foliage" })
+    # get peak foliage dates
+    peaks = models.PeakFoliage.objects.all().order_by('date')
 
-def summaries_peakfoliage_submit(request):
-    if request.method == 'POST':
-        # add peak foliage
-        pass
-
-    else:
-        # display form
-        pass
-
-    return render(request, 'summaries/peakfoliage/submit.html', { 'title': "Submit Peak Foliage" })
+    return render(request, 'summaries/peakfoliage/view.html', { 'title': "Peak Foliage", "peaks": peaks})
 
 
 def summaries_sunsetlake_view(request):
     return render(request, 'summaries/sunsetlake/view.html', { 'title': "Sunset Lake Ice In/Ice Out" })
-
-def summaries_sunsetlake_submit(request):
-    if request.method == 'POST':
-        # add ice in ice out
-        pass
-        
-    else:
-        # display form
-        pass
-
-    return render(request, 'summaries/sunsetlake/submit.html', { 'title': "Submit Sunset Lake Ice In/Ice Out" })
 
 
 def summaries_precip_view(request):
