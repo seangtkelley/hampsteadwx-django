@@ -157,13 +157,13 @@ def summaries_monthly_csv(request, year, month):
         # calc
         summary = workflow.calc_monthly_summary(year, month)
 
-    if summary is not None and os.path.exists(summary['csv_filepath']):
+    if summary is not None and os.path.exists(getattr(summary, 'csv_filepath')):
         # read csv and build response
-        with open(summary['csv_filepath'], 'r') as fh:
+        with open(getattr(summary, 'csv_filepath'), 'r') as fh:
             response = HttpResponse(fh.read(), content_type="text/csv")
-            response['Content-Disposition'] = f"attachment; filename={summary['csv_filepath'].split('/')[-1]}"
+            response['Content-Disposition'] = f"attachment; filename={getattr(summary, 'csv_filepath').split('/')[-1]}"
             return response
-            
+
     # csv not found
     raise Http404
 
