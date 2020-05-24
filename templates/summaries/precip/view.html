@@ -24,7 +24,7 @@
         </tr>
 
         {% for summary in summaries %}
-            {% if summary.month == 1 %}
+            {% if summary.date.month == 1 %}
                 <tr>
                     <td>{{ summary.date.year }}</td>
             {% endif %}
