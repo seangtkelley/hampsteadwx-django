@@ -103,7 +103,6 @@ class SunsetLakeIceInIceOut(models.Model):
 
 
 class SnowSeason(models.Model):
-    date = models.DateField()
     season = models.CharField(max_length=16)
     oct = models.DecimalField(max_digits=8, decimal_places=1)
     nov = models.DecimalField(max_digits=8, decimal_places=1)
