@@ -288,7 +288,7 @@
         <div class="col-xs-6 col-sm-6 col-md-6 col-lg-6" style="text-align: center" placeholder="Select a Year">
             <select class="yearSelect" style="width: 100%">
                 {% now "Y" as current_year %}
-                {% for year in 2011|range_inclu:current_year %}
+                {% for year in 2010|range_inclu:current_year %}
                     <option value='{{ year }}'>{{ year }}</option>
                 {% endfor %}
             </select>
