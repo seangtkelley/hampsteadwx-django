@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 
 from django.shortcuts import render, redirect
 from django.http import HttpResponse, Http404
@@ -244,15 +245,22 @@ def summaries_annual_table(request, year):
 
 
 def summaries_snowseason_view(request):
-    return render(request, 'summaries/snowseason/view.html', { 'title': "Snow Season" })
+    # get snow seasons
+    summaries = models.SnowSeason.objects.all().order_by('season')
+
+    return render(request, 'summaries/snowseason/view.html', { 'title': "Snow Season", 'summaries': summaries })
 
 def summaries_snowseason_season(request, season):
+    # get snow season
+    summary = models.SnowSeason.objects.filter(season=season).first()
+
     month_names = ['October', 'November', 'December', 'January', 'February', 'March', 'April', 'May']
     month_abbrs = ['oct', 'nov', 'dec', 'jan', 'feb', 'mar', 'apr', 'may']
     return render(request, 'summaries/snowseason/season.html', { 
         'title': f"{season} Snow Season",
         'month_names': month_names,
-        'month_abbrs': month_abbrs
+        'month_abbrs': month_abbrs,
+        'summary': summary
         })
 
 
@@ -264,8 +272,22 @@ def summaries_peakfoliage_view(request):
 
 
 def summaries_sunsetlake_view(request):
-    return render(request, 'summaries/sunsetlake/view.html', { 'title': "Sunset Lake Ice In/Ice Out" })
+    # get sunset lake summaries
+    summaries = models.SunsetLakeIceInIceOut.objects.all().order_by('season')
+
+    return render(request, 'summaries/sunsetlake/view.html', { 'title': "Sunset Lake Ice In/Ice Out", 'summaries': summaries })
 
 
 def summaries_precip_view(request):
-    return render(request, 'summaries/precip/view.html', { 'title': "Precipitation" })
+    # get monthly summaries
+    all_summaries = []
+    for year in range(2010, datetime.now().year+1):
+        for month in range(1, 13):
+            if models.MonthlyOb.objects.filter(date__year=year, date__month=month).exists():
+                # from database
+                all_summaries.append(models.MonthlyOb.objects.filter(date__year=year, date__month=month).first())
+            elif models.DailyOb.objects.filter(date__year=year, date__month=month).count() > 0:
+                # calc
+                all_summaries.append(workflow.calc_monthly_summary(year, month))
+
+    return render(request, 'summaries/precip/view.html', { 'title': "Precipitation", 'summaries': all_summaries })
