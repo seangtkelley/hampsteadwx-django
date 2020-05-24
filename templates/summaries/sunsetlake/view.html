@@ -24,8 +24,8 @@
                         
                         '{{ summary.season }}',
                         // using only year 0 and 1 in order to compare durations
-                        new Date(0, {{ summary.icein_date|date:"n" }}-1, {{ summary.icein_date|date:"j" }}),
-                        new Date({{ summary.iceout_date|date:"Y" }}-{{ summary.icein_date|date:"Y" }}, {{ summary.iceout_date|date:"n" }}-1, {{ summary.icein_date|date:"j" }}),
+                        new Date({{ summary.icein_date|date:"Y"|map_snowseason_year:summary.season }}, {{ summary.icein_date|date:"n" }}-1, {{ summary.icein_date|date:"j" }}),
+                        new Date({{ summary.iceout_date|date:"Y"|map_snowseason_year:summary.season }}, {{ summary.iceout_date|date:"n" }}-1, {{ summary.iceout_date|date:"j" }}),
                         `<div style="margin: 5px;">
                             <h4 style="border-bottom: 1px solid grey;">{{ summary.season }}</h4>
                             {{ summary.icein_date|date:"M j, Y" }} - {{ summary.iceout_date|date:"M j, Y" }}
@@ -71,6 +71,6 @@
 </script>
 <div id="" class="container" style="min-height: 650px;">
     <h3 style="text-align: center;">Sunset Lake Ice In/Ice Out</h3>
-    <div id="timeline" style="height: {{ summaries|length|multiply:'25' }}"></div>
+    <div id="timeline" style="height: {{ summaries|length|multiply:'60' }}px"></div>
 </div>
 {% endblock %}

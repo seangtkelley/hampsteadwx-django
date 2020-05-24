@@ -18,7 +18,7 @@
             dataTable.addRows([
 
                 {% for summary in summaries %}
-                    ['{{ summary.season }}', '{{ summary.total }}', '{{ summary.total }}' ],
+                    ['{{ summary.season }}', {{ summary.total }}, '{{ summary.total }}' ],
                 {% endfor %}
 
             ]);
@@ -63,6 +63,6 @@
     <h4 style="text-align: center;">1990-1991 to 2002-2003 data are from Mr. Maurice Randall, Hampstead Town
         Historian</h4>
     <div style="text-align: center;">Click on a bar to see the month graph.</div>
-    <div id="chart_div" style="height: {{ summaries|length|multiply:'25' }}"></div>
+    <div id="chart_div" style="height: {{ summaries|length|multiply:'30' }}px"></div>
 </div>
 {% endblock %}

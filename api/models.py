@@ -104,14 +104,15 @@ class SunsetLakeIceInIceOut(models.Model):
 
 class SnowSeason(models.Model):
     season = models.CharField(max_length=16)
-    oct = models.DecimalField(max_digits=8, decimal_places=1)
-    nov = models.DecimalField(max_digits=8, decimal_places=1)
-    dec = models.DecimalField(max_digits=8, decimal_places=1)
-    jan = models.DecimalField(max_digits=8, decimal_places=1)
-    feb = models.DecimalField(max_digits=8, decimal_places=1)
-    mar = models.DecimalField(max_digits=8, decimal_places=1)
-    apr = models.DecimalField(max_digits=8, decimal_places=1)
-    may = models.DecimalField(max_digits=8, decimal_places=1)
+    oct = models.DecimalField(max_digits=8, decimal_places=3)
+    nov = models.DecimalField(max_digits=8, decimal_places=3)
+    dec = models.DecimalField(max_digits=8, decimal_places=3)
+    jan = models.DecimalField(max_digits=8, decimal_places=3)
+    feb = models.DecimalField(max_digits=8, decimal_places=3)
+    mar = models.DecimalField(max_digits=8, decimal_places=3)
+    apr = models.DecimalField(max_digits=8, decimal_places=3)
+    may = models.DecimalField(max_digits=8, decimal_places=3)
+    total = models.DecimalField(max_digits=8, decimal_places=1)
 
 
 class PeakFoliage(models.Model):

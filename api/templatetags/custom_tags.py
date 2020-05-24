@@ -98,3 +98,8 @@ def format_dfn(value):
             return str(value)
     except Exception as e:
         return str(e)
+
+@register.filter
+def map_snowseason_year(year, season):
+    map_dict = { int(season.split('-')[0]): 1901, int(season.split('-')[1]): 1902 }
+    return map_dict[int(year)]

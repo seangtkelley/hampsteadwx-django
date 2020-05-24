@@ -53,10 +53,11 @@
         });
     });
 </script>
-<div id="" class="container" style="min-height: 650px;">
-    <h3 style="text-align: center;">Snow Season Summaries</h3>
-    <h4 style="text-align: center;">1990-1991 to 2002-2003 data are from Mr. Maurice Randall, Hampstead Town Historian
-    </h4>
+<div class="container" style="min-height: 650px;">
+    <h3 class="page-title" style="text-align: center;">Snow Season {{ summary.season }}</h3>
+    <a href="{% url 'summaries_snowseason_view' %}" class="btn btn-info" style="margin: auto">
+        <i class="fa fa-chevron-left"></i>&nbsp; Back
+    </a>
     <div id="chart_div" style="height: 500px;"></div>
 </div>
 {% endblock %}
