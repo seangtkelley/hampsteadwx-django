@@ -1,5 +1,6 @@
 import os
 from decimal import Decimal
+from datetime import datetime
 
 import numpy as np
 import pandas as pd
@@ -19,6 +20,7 @@ def get_normals():
         normals['sf'] = list(map(Decimal, lines[2].split(',')))
 
     return normals
+
 
 def process_csv(filepath):
     # load file
@@ -57,6 +59,7 @@ def process_csv(filepath):
             ob.save()
 
     return df.iloc[0]['DATE'].year, df.iloc[0]['DATE'].month
+
 
 def calc_monthly_summary(year, month, save_to_db=False):
     # get all daily obs from month
@@ -113,6 +116,20 @@ def calc_monthly_summary(year, month, save_to_db=False):
     else:
         return summary
 
+
+def get_all_monthly_summaries():
+    all_summaries = []
+    for year in range(2010, datetime.now().year+1):
+        for month in range(1, 13):
+            if models.MonthlyOb.objects.filter(date__year=year, date__month=month).exists():
+                # from database
+                all_summaries.append(models.MonthlyOb.objects.filter(date__year=year, date__month=month).first())
+            elif models.DailyOb.objects.filter(date__year=year, date__month=month).count() > 0:
+                # calc
+                all_summaries.append(calc_monthly_summary(year, month))
+    return all_summaries
+
+
 def calc_annual_summary(year):
     # get all daily obs from year
     obs = models.DailyOb.objects.filter(date__year=year).order_by('date')
@@ -130,6 +147,7 @@ def calc_annual_summary(year):
     summary['sf_dfn'] = summary['sf'] - normals['sf'][12]
 
     return summary
+
 
 def calc_general_summary(df):
     return {

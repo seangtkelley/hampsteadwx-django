@@ -280,14 +280,6 @@ def summaries_sunsetlake_view(request):
 
 def summaries_precip_view(request):
     # get monthly summaries
-    all_summaries = []
-    for year in range(2010, datetime.now().year+1):
-        for month in range(1, 13):
-            if models.MonthlyOb.objects.filter(date__year=year, date__month=month).exists():
-                # from database
-                all_summaries.append(models.MonthlyOb.objects.filter(date__year=year, date__month=month).first())
-            elif models.DailyOb.objects.filter(date__year=year, date__month=month).count() > 0:
-                # calc
-                all_summaries.append(workflow.calc_monthly_summary(year, month))
+    all_summaries = workflow.get_all_monthly_summaries()
 
     return render(request, 'summaries/precip/view.html', { 'title': "Precipitation", 'summaries': all_summaries })
