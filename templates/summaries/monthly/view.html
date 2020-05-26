@@ -278,11 +278,11 @@
 </script>
 {% endif %}
 
-<div class="container" style="min-height: 650px;">
+<div class="container mt-3" style="min-height: 650px;">
 
     {% if monthly_summary is None %}
 
-    <h2 class="page-title" style="margin-bottom: 10px; padding-bottom: 5px; border-bottom: 1px solid #777;">Find Summary</h2>
+    <h2 style="margin-bottom: 10px; padding-bottom: 5px; border-bottom: 1px solid #777;">Find Summary</h2>
     <div class="row better-row">
         <div class="col-xs-4 col-sm-4 col-md-4 col-lg-4" style="text-align: center">
             <select class="monthSelect" style="width: 100%">
@@ -320,7 +320,7 @@
 
     <div class="row better-row">
         <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12" style="text-align: left">
-            <h1 class="page-title">{{ monthly_summary.date|date:'F' }} {{ monthly_summary.date.year }} Monthly Summary</h1>
+            <h1>{{ monthly_summary.date|date:'F' }} {{ monthly_summary.date.year }} Monthly Summary</h1>
         </div>
         <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12" style="min-height: 5px; border-top: 1px solid grey;"></div>
 

@@ -3,11 +3,11 @@
 {% load custom_tags %}
 
 {% block content %}
-<div class="container" style="min-height: 650px;">
+<div class="container mt-3" style="min-height: 650px;">
     <form action="{% url 'summaries_monthly_submit' %}" enctype="multipart/form-data" method="POST">
         {% csrf_token %}
 
-        <h2 class="page-title">Submit Monthly Data</h2>
+        <h2>Submit Monthly Data</h2>
 
         <script>
             $(document).ready(function () {
