@@ -74,6 +74,7 @@ def calc_monthly_summary(year, month, save_to_db=False):
     summary = calc_general_summary(df)
 
     # add meta
+    summary['date'] = df.iloc[0].date
     summary['csv_filepath'] = df.iloc[0].csv_filepath
 
     # add month specific fields
@@ -117,20 +118,7 @@ def calc_monthly_summary(year, month, save_to_db=False):
         return summary
 
 
-def get_all_monthly_summaries():
-    all_summaries = []
-    for year in range(2010, datetime.now().year+1):
-        for month in range(1, 13):
-            if models.MonthlySummary.objects.filter(date__year=year, date__month=month).exists():
-                # from database
-                all_summaries.append(models.MonthlySummary.objects.filter(date__year=year, date__month=month).first())
-            elif models.DailyOb.objects.filter(date__year=year, date__month=month).count() > 0:
-                # calc
-                all_summaries.append(calc_monthly_summary(year, month))
-    return all_summaries
-
-
-def calc_annual_summary(year):
+def calc_annual_summary(year, save_to_db=False):
     # get all daily obs from year
     obs = models.DailyOb.objects.filter(date__year=year).order_by('date')
     if obs.count() == 0:
@@ -142,19 +130,28 @@ def calc_annual_summary(year):
     # calc general
     summary = calc_general_summary(df)
 
+    # add meta
+    summary['year'] = year
+
     # add annual specific fields
     normals = get_normals()
     summary['avg_temp_dfn'] = summary['avg_temp'] - normals['temp'][12]
     summary['precip_dfn'] = summary['precip'] - normals['precip'][12]
     summary['sf_dfn'] = summary['sf'] - normals['sf'][12]
 
-    return summary
+    if save_to_db:
+        if models.AnnualSummary.objects.filter(year=year).exists():
+            db_summary = models.AnnualSummary.objects.filter(year=year).update(**summary)
+        else:
+            db_summary = models.AnnualSummary.objects.create(**summary)
+        
+        return db_summary
+    else:
+        return summary
 
 
 def calc_general_summary(df):
     return {
-        'date': df.iloc[0].date,
-
         # abrv key:
         # grtr = greater
         # grtst = greatest

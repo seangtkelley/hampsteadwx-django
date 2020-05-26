@@ -42,9 +42,10 @@ def summaries_monthly_submit(request):
                     payload = utils.add_alert(payload, 'danger', f"Error occurred while processing csv: <code>{str(e)}</code>")
                     return render(request, 'summaries/monthly/submit.html', payload)
 
-                # calculate and save summary
+                # calculate and save summaries
                 try:
                     workflow.calc_monthly_summary(year, month, save_to_db=True)
+                    workflow.calc_annual_summary(year, save_to_db=True)
                 except Exception as e:
                     payload = utils.add_alert(payload, 'danger', f"Error occurred while calculating summary: <code>{str(e)}</code>")
                     return render(request, 'summaries/monthly/submit.html', payload)
@@ -146,16 +147,13 @@ def summaries_annual_view(request, year):
     payload = { 'title': f"{year} Annual Summary" }
 
     # get annual summary
-    if None is not None: # models.AnnualSummary.objects.filter(date__year=year).exists():
-        # from database: TODO
-        # payload['annual_summary'] = models.AnnualSummary.objects.filter(date__year=year).first()
-        pass
-    else:
-        # calc
-        payload['annual_summary'] = workflow.calc_annual_summary(year)
+    if models.AnnualSummary.objects.filter(year=year).exists():
+        payload['annual_summary'] = models.AnnualSummary.objects.filter(year=year).first()
 
-    # get monthly summaries
-    payload['monthly_summaries'] = models.MonthlySummary.objects.filter(date__year=year).order_by('date')
+        # get monthly summaries
+        payload['monthly_summaries'] = models.MonthlySummary.objects.filter(date__year=year).order_by('date')
+    else:
+        payload = utils.add_alert(payload, 'warning', f"{year} Summary not found.")
 
     return render(request, 'summaries/annual/view.html', payload)
 
@@ -163,13 +161,10 @@ def summaries_annual_text(request, year):
     payload = { 'title': f"{year} Annual Summary" }
 
     # get annual summary
-    if None is not None: # models.AnnualSummary.objects.filter(date__year=year).exists():
-        # from database: TODO
-        # payload['annual_summary'] = models.AnnualSummary.objects.filter(date__year=year).first()
-        pass
+    if models.AnnualSummary.objects.filter(year=year).exists():
+        payload['annual_summary'] = models.AnnualSummary.objects.filter(year=year).first()
     else:
-        # calc
-        payload['annual_summary'] = workflow.calc_annual_summary(year)
+        raise Http404
 
     normals = workflow.get_normals()
     payload['AVG_TEMP'] = normals['temp'][12]
@@ -181,17 +176,15 @@ def summaries_annual_text(request, year):
 def summaries_annual_table(request, year):
     payload = { 'title': f"{year} Annual Summary" }
 
-    # get monthly summaries
-    payload['all_summaries'] = list(models.MonthlySummary.objects.filter(date__year=year).order_by('date'))
-
     # get annual summary
-    if None is not None: # models.AnnualSummary.objects.filter(date__year=year).exists():
-        # from database: TODO
-        # payload['all_summaries'].append(models.AnnualSummary.objects.filter(date__year=year).first())
-        pass
+    if models.AnnualSummary.objects.filter(year=year).exists():
+        # get monthly summaries
+        payload['all_summaries'] = list(models.MonthlySummary.objects.filter(date__year=year).order_by('date'))
+
+        # get annual
+        payload['all_summaries'].append(models.AnnualSummary.objects.filter(year=year).first())
     else:
-        # calc
-        payload['all_summaries'].append(workflow.calc_annual_summary(year))
+        raise Http404
 
     return render(request, 'summaries/annual/table.html', payload)
 
@@ -239,6 +232,6 @@ def summaries_precip_view(request):
     payload = { 'title': "Precipitation" }
 
     # get monthly summaries
-    payload['all_summaries'] = workflow.get_all_monthly_summaries()
+    payload['summaries'] = models.MonthlySummary.objects.all().order_by('date')
 
     return render(request, 'summaries/precip/view.html', payload)

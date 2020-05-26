@@ -101,7 +101,8 @@ class MonthlySummary(GeneralSummary):
 
 
 class AnnualSummary(GeneralSummary):
-    pass
+    # meta
+    year = models.IntegerField()
 
 
 class SunsetLakeIceInIceOut(models.Model):

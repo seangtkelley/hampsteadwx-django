@@ -305,7 +305,7 @@
     {% if annual_summary is not None %}
     <div class="row better-row">
         <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12" style="text-align: left">
-            <h1>{{ annual_summary.date.year }} Annual Summary</h1>
+            <h1>{{ annual_summary.year }} Annual Summary</h1>
         </div>
         <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12" style="min-height: 5px; border-top: 1px solid grey;"></div>
         <div id="summaryBtns" class="col-xs-12 col-sm-12 col-md-12 col-lg-12" style="text-align: left; margin-bottom:2px;">
@@ -318,10 +318,10 @@
             <a href="#" id="chartsBtn" onclick="viewCharts()" class="btn btn-primary" style="margin-bottom: 3px">
                 <i class="fa fa-bar-chart"></i>&nbsp; View Charts
             </a>
-            <a href="{% url 'summaries_annual_text' year=annual_summary.date.year %}" target="_blank" class="btn btn-primary" style="margin-bottom: 3px">
+            <a href="{% url 'summaries_annual_text' year=annual_summary.year %}" target="_blank" class="btn btn-primary" style="margin-bottom: 3px">
                 <i class="fa fa-external-link"></i>&nbsp; Open Text Summary
             </a>
-            <a href="{% url 'summaries_annual_table' year=annual_summary.date.year %}" target="_blank" class="btn btn-primary" style="margin-bottom: 3px">
+            <a href="{% url 'summaries_annual_table' year=annual_summary.year %}" target="_blank" class="btn btn-primary" style="margin-bottom: 3px">
                 <i class="fa fa-table"></i>&nbsp; Open Table Summary
             </a>
         </div>
@@ -364,7 +364,7 @@
         <div id="textSummary">
             <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12" style="padding: 0;">
                 <iframe id="textSummaryiFrame" style="width:100%; border:none;"
-                    src="{% url 'summaries_annual_text' year=annual_summary.date.year %}"></iframe>
+                    src="{% url 'summaries_annual_text' year=annual_summary.year %}"></iframe>
             </div>
         </div>
     </div>
