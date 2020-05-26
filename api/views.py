@@ -22,6 +22,8 @@ def normals_view(request):
 
 
 def summaries_monthly_submit(request):
+    payload = { 'title': f"Submit Monthly Summary" }
+
     if request.method == 'POST':
         # calc monthly summary
         form = forms.SubmitMonthlyCSV(request.POST, request.FILES)
@@ -37,35 +39,33 @@ def summaries_monthly_submit(request):
                 try:
                     year, month = workflow.process_csv(filepath)
                 except Exception as e:
-                    return render(request, 'summaries/monthly/submit.html', { 
-                        'title': "Submit Monthly Summary",
-                        'alerts': [ utils.create_alert('danger', f"Error occurred while processing csv: <code>{str(e)}</code>") ]
-                        })
-                
+                    payload = utils.add_alert(payload, 'danger', f"Error occurred while processing csv: <code>{str(e)}</code>")
+                    return render(request, 'summaries/monthly/submit.html', payload)
+
+                # calculate and save summary
+                try:
+                    workflow.calc_monthly_summary(year, month, save_to_db=True)
+                except Exception as e:
+                    payload = utils.add_alert(payload, 'danger', f"Error occurred while calculating summary: <code>{str(e)}</code>")
+                    return render(request, 'summaries/monthly/submit.html', payload)
+
                 # prompt redirect
-                return render(request, 'summaries/monthly/submit.html', { 
-                    'title': "Submit Monthly Summary",
-                    'alerts': [ utils.create_alert('success', f"{utils.get_month_name(month)} {year} monthly data successfully processed. <a href='/summaries/monthly/{year}/{month}'>View summary <i class='fa fa-external-link'></i></a>") ]
-                    })
+                payload = utils.add_alert(payload, 'success', f"{utils.get_month_name(month)} {year} monthly data successfully processed. <a href='/summaries/monthly/{year}/{month}'>View summary <i class='fa fa-external-link'></i></a>")
             
             else:
-                return render(request, 'summaries/monthly/submit.html', { 
-                    'title': "Submit Monthly Summary",
-                    'alerts': [ utils.create_alert('danger', "Incorrect password") ]
-                    })
+                payload = utils.add_alert(payload, 'danger', "Incorrect password")
         
         else:
-            return render(request, 'summaries/monthly/submit.html', { 
-                    'title': "Submit Monthly Summary",
-                    'alerts': [ utils.create_alert('danger', "Form data invalid.") ]
-                    })
+            payload = utils.add_alert(payload, 'danger', "Form data invalid.")
 
-    return render(request, 'summaries/monthly/submit.html', { 'title': "Submit Monthly Summary" })
+    return render(request, 'summaries/monthly/submit.html', payload)
 
 def summaries_monthly_home(request):
     return render(request, 'summaries/monthly/view.html', { 'title': "View Monthly Summary" })
 
 def summaries_monthly_view(request, year, month):
+    payload = { 'title': f"{utils.get_month_name(month)} {year} Monthly Summary" }
+
     if request.method == 'POST':
         # edit remarks
         form = forms.EditRemarks(request.POST)
@@ -75,64 +75,49 @@ def summaries_monthly_view(request, year, month):
                 if models.MonthlySummary.objects.filter(date__year=year, date__month=month).exists():
                     summary = models.MonthlySummary.objects.filter(date__year=year, date__month=month).first()
                 else:
-                    # calc
-                    summary = workflow.calc_monthly_summary(year, month, save_to_db=True)
+                    payload = utils.add_alert(payload, 'danger', "Incorrect password")
 
                 # edit remarks
                 summary.remarks = form.cleaned_data['remarks']
                 summary.save()
                 
                 # display alert
-                return render(request, 'summaries/monthly/view.html', { 
-                    'title': f"{utils.get_month_name(month)} {year} Monthly Summary",
-                    'monthly_summary': summary,
-                    'daily_obs': models.DailyOb.objects.filter(date__year=year, date__month=month).order_by('date'),
-                    'alerts': [ utils.create_alert('success', f"{utils.get_month_name(month)} {year} remarks saved.") ]
-                    })
+                payload = utils.add_alert(payload, 'success', f"{utils.get_month_name(month)} {year} remarks saved.")
             
             else:
-                return render(request, 'summaries/monthly/view.html', { 
-                    'title': f"{utils.get_month_name(month)} {year} Monthly Summary",
-                    'alerts': [ utils.create_alert('danger', "Incorrect password") ]
-                    })
+                payload = utils.add_alert(payload, 'danger', "Incorrect password")
         
         else:
-            return render(request, 'summaries/monthly/view.html', { 
-                    'title': f"{utils.get_month_name(month)} {year} Monthly Summary",
-                    'alerts': [ utils.create_alert('danger', "Form data invalid.") ]
-                    })
-
+            payload = utils.add_alert(payload, 'danger', "Form data invalid.")
+    
     # get monthly summary
     if models.MonthlySummary.objects.filter(date__year=year, date__month=month).exists():
-        # from database
-        summary = models.MonthlySummary.objects.filter(date__year=year, date__month=month).first()
+        payload['monthly_summary'] = models.MonthlySummary.objects.filter(date__year=year, date__month=month).first()
     else:
-        # calc
-        summary = workflow.calc_monthly_summary(year, month)
+        payload = utils.add_alert(payload, 'warning', f"{utils.get_month_name(month)} {year} Summary not found.")
 
-    return render(request, 'summaries/monthly/view.html', { 
-        'title': f"{utils.get_month_name(month)} {year} Monthly Summary",
-        'monthly_summary': summary,
-        'daily_obs': models.DailyOb.objects.filter(date__year=year, date__month=month).order_by('date')
-        })
+    # get daily obs
+    payload['daily_obs'] = models.DailyOb.objects.filter(date__year=year, date__month=month).order_by('date')
+
+    return render(request, 'summaries/monthly/view.html', payload)
 
 def summaries_monthly_text(request, year, month):
+    payload = { 'title': f"{utils.get_month_name(month)} {year} Monthly Summary" }
+
     # get monthly summary
     if models.MonthlySummary.objects.filter(date__year=year, date__month=month).exists():
         # from database
-        summary = models.MonthlySummary.objects.filter(date__year=year, date__month=month).first()
+        payload['monthly_summary'] = models.MonthlySummary.objects.filter(date__year=year, date__month=month).first()
     else:
-        # calc
-        summary = workflow.calc_monthly_summary(year, month)
+        # summary not found
+        raise Http404
 
     normals = workflow.get_normals()
-    return render(request, 'summaries/monthly/text.html', { 
-        'title': f"{utils.get_month_name(month)} {year} Monthly Summary",
-        'monthly_summary': summary,
-        'AVG_TEMP': normals['temp'][month-1],
-        'AVG_PRECIP': normals['precip'][month-1],
-        'AVG_SNFL': normals['sf'][month-1],
-        })
+    payload['AVG_TEMP'] = normals['temp'][month-1]
+    payload['AVG_PRECIP'] = normals['precip'][month-1]
+    payload['AVG_SNFL'] = normals['sf'][month-1]
+
+    return render(request, 'summaries/monthly/text.html', payload)
 
 def summaries_monthly_csv(request, year, month):
     # get summary
@@ -158,113 +143,102 @@ def summaries_annual_home(request):
     return render(request, 'summaries/annual/view.html', { 'title': "View Annual Summary" })
 
 def summaries_annual_view(request, year):
+    payload = { 'title': f"{year} Annual Summary" }
+
     # get annual summary
     if None is not None: # models.AnnualSummary.objects.filter(date__year=year).exists():
         # from database: TODO
-        # summary = models.AnnualSummary.objects.filter(date__year=year).first()
+        # payload['annual_summary'] = models.AnnualSummary.objects.filter(date__year=year).first()
         pass
     else:
         # calc
-        annual_summary = workflow.calc_annual_summary(year)
+        payload['annual_summary'] = workflow.calc_annual_summary(year)
 
     # get monthly summaries
-    monthly_summaries = []
-    for month in range(1, 13):
-        if models.MonthlySummary.objects.filter(date__year=year, date__month=month).exists():
-            # from database
-            monthly_summaries.append(models.MonthlySummary.objects.filter(date__year=year, date__month=month))
-        elif models.DailyOb.objects.filter(date__year=year, date__month=month).count() > 0:
-            # calc
-            monthly_summaries.append(workflow.calc_monthly_summary(year, month))
+    payload['monthly_summaries'] = models.MonthlySummary.objects.filter(date__year=year).order_by('date')
 
-    return render(request, 'summaries/annual/view.html', { 
-        'title': f"{year} Annual Summary",
-        'annual_summary': annual_summary,
-        'monthly_summaries': monthly_summaries,
-        })
+    return render(request, 'summaries/annual/view.html', payload)
 
 def summaries_annual_text(request, year):
+    payload = { 'title': f"{year} Annual Summary" }
+
     # get annual summary
     if None is not None: # models.AnnualSummary.objects.filter(date__year=year).exists():
         # from database: TODO
-        # annual_summary = models.AnnualSummary.objects.filter(date__year=year).first()
+        # payload['annual_summary'] = models.AnnualSummary.objects.filter(date__year=year).first()
         pass
     else:
         # calc
-        annual_summary = workflow.calc_annual_summary(year)
+        payload['annual_summary'] = workflow.calc_annual_summary(year)
 
     normals = workflow.get_normals()
-    return render(request, 'summaries/annual/text.html', {
-        'title': f"{year} Annual Summary",
-        'annual_summary': annual_summary,
-        'AVG_TEMP': normals['temp'][12],
-        'AVG_PRECIP': normals['precip'][12],
-        'AVG_SNFL': normals['sf'][12],
-        })
+    payload['AVG_TEMP'] = normals['temp'][12]
+    payload['AVG_PRECIP'] = normals['precip'][12]
+    payload['AVG_SNFL'] = normals['sf'][12]
+
+    return render(request, 'summaries/annual/text.html', payload)
 
 def summaries_annual_table(request, year):
-    all_summaries = []
+    payload = { 'title': f"{year} Annual Summary" }
 
     # get monthly summaries
-    for month in range(1, 13):
-        if models.MonthlySummary.objects.filter(date__year=year, date__month=month).exists():
-            # from database
-            all_summaries.append(models.MonthlySummary.objects.filter(date__year=year, date__month=month).first())
-        elif models.DailyOb.objects.filter(date__year=year, date__month=month).count() > 0:
-            # calc
-            all_summaries.append(workflow.calc_monthly_summary(year, month))
+    payload['all_summaries'] = list(models.MonthlySummary.objects.filter(date__year=year).order_by('date'))
 
     # get annual summary
     if None is not None: # models.AnnualSummary.objects.filter(date__year=year).exists():
         # from database: TODO
-        # all_summaries.append(models.AnnualSummary.objects.filter(date__year=year).first())
+        # payload['all_summaries'].append(models.AnnualSummary.objects.filter(date__year=year).first())
         pass
     else:
         # calc
-        all_summaries.append(workflow.calc_annual_summary(year))
+        payload['all_summaries'].append(workflow.calc_annual_summary(year))
 
-    return render(request, 'summaries/annual/table.html', {
-        'title': f"{year} Annual Summary",
-        'all_summaries': all_summaries
-        })
+    return render(request, 'summaries/annual/table.html', payload)
 
 
 def summaries_snowseason_view(request):
-    # get snow seasons
-    summaries = models.SnowSeason.objects.all().order_by('season')
+    payload = { 'title': "Snow Season" }
 
-    return render(request, 'summaries/snowseason/view.html', { 'title': "Snow Season", 'summaries': summaries })
+    # get snow seasons
+    payload['summaries'] = models.SnowSeason.objects.all().order_by('season')
+
+    return render(request, 'summaries/snowseason/view.html', payload)
 
 def summaries_snowseason_season(request, season):
-    # get snow season
-    summary = models.SnowSeason.objects.filter(season=season).first()
+    payload = { 'title': f"{season} Snow Season" }
 
-    month_names = ['October', 'November', 'December', 'January', 'February', 'March', 'April', 'May']
-    month_abbrs = ['oct', 'nov', 'dec', 'jan', 'feb', 'mar', 'apr', 'may']
-    return render(request, 'summaries/snowseason/season.html', { 
-        'title': f"{season} Snow Season",
-        'month_names': month_names,
-        'month_abbrs': month_abbrs,
-        'summary': summary
-        })
+    # get snow season
+    payload['summary'] = models.SnowSeason.objects.filter(season=season).first()
+
+    # loop help
+    payload['month_names'] = ['October', 'November', 'December', 'January', 'February', 'March', 'April', 'May']
+    payload['month_abbrs'] = ['oct', 'nov', 'dec', 'jan', 'feb', 'mar', 'apr', 'may']
+
+    return render(request, 'summaries/snowseason/season.html', payload)
 
 
 def summaries_peakfoliage_view(request):
-    # get peak foliage dates
-    peaks = models.PeakFoliage.objects.all().order_by('date')
+    payload = { 'title': "Peak Foliage" }
 
-    return render(request, 'summaries/peakfoliage/view.html', { 'title': "Peak Foliage", "peaks": peaks})
+    # get peak foliage dates
+    payload['peaks'] = models.PeakFoliage.objects.all().order_by('date')
+
+    return render(request, 'summaries/peakfoliage/view.html', payload)
 
 
 def summaries_sunsetlake_view(request):
-    # get sunset lake summaries
-    summaries = models.SunsetLakeIceInIceOut.objects.all().order_by('season')
+    payload = { 'title': "Sunset Lake Ice In/Ice Out" }
 
-    return render(request, 'summaries/sunsetlake/view.html', { 'title': "Sunset Lake Ice In/Ice Out", 'summaries': summaries })
+    # get sunset lake summaries
+    payload['summaries'] = models.SunsetLakeIceInIceOut.objects.all().order_by('season')
+
+    return render(request, 'summaries/sunsetlake/view.html', payload)
 
 
 def summaries_precip_view(request):
-    # get monthly summaries
-    all_summaries = workflow.get_all_monthly_summaries()
+    payload = { 'title': "Precipitation" }
 
-    return render(request, 'summaries/precip/view.html', { 'title': "Precipitation", 'summaries': all_summaries })
+    # get monthly summaries
+    payload['all_summaries'] = workflow.get_all_monthly_summaries()
+
+    return render(request, 'summaries/precip/view.html', payload)

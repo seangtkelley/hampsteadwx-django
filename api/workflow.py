@@ -108,7 +108,7 @@ def calc_monthly_summary(year, month, save_to_db=False):
     
     if save_to_db:
         if models.MonthlySummary.objects.filter(date=summary['date']).exists():
-            db_summary = models.MonthlySummary.objects.filter(date=summary['date']).first().update(**summary)
+            db_summary = models.MonthlySummary.objects.filter(date=summary['date']).update(**summary)
         else:
             db_summary = models.MonthlySummary.objects.create(**summary)
         
@@ -133,6 +133,8 @@ def get_all_monthly_summaries():
 def calc_annual_summary(year):
     # get all daily obs from year
     obs = models.DailyOb.objects.filter(date__year=year).order_by('date')
+    if obs.count() == 0:
+        return None
 
     # convert to dataframe
     df = pd.DataFrame.from_records(obs.values())
