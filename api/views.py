@@ -21,21 +21,6 @@ def normals_view(request):
     return render(request, 'normals.html', { 'title': "Normals" })
 
 
-def photos_home(request):
-    return render(request, 'photos/home.html', { 'title': "Photos" })
-
-def photos_submit(request):
-    if request.method == 'POST':
-        # save photo
-        pass
-
-    else:
-        # display form
-        pass
-
-    return render(request, 'photos/submit.html', { 'title': "Submit Photos" })
-
-
 def summaries_monthly_submit(request):
     if request.method == 'POST':
         # calc monthly summary
@@ -87,8 +72,8 @@ def summaries_monthly_view(request, year, month):
         if form.is_valid():
             if form.cleaned_data['password'] == os.environ['SITE_PASS']:
                 # find summary
-                if models.MonthlyOb.objects.filter(date__year=year, date__month=month).exists():
-                    summary = models.MonthlyOb.objects.filter(date__year=year, date__month=month).first()
+                if models.MonthlySummary.objects.filter(date__year=year, date__month=month).exists():
+                    summary = models.MonthlySummary.objects.filter(date__year=year, date__month=month).first()
                 else:
                     # calc
                     summary = workflow.calc_monthly_summary(year, month, save_to_db=True)
@@ -118,9 +103,9 @@ def summaries_monthly_view(request, year, month):
                     })
 
     # get monthly summary
-    if models.MonthlyOb.objects.filter(date__year=year, date__month=month).exists():
+    if models.MonthlySummary.objects.filter(date__year=year, date__month=month).exists():
         # from database
-        summary = models.MonthlyOb.objects.filter(date__year=year, date__month=month).first()
+        summary = models.MonthlySummary.objects.filter(date__year=year, date__month=month).first()
     else:
         # calc
         summary = workflow.calc_monthly_summary(year, month)
@@ -133,9 +118,9 @@ def summaries_monthly_view(request, year, month):
 
 def summaries_monthly_text(request, year, month):
     # get monthly summary
-    if models.MonthlyOb.objects.filter(date__year=year, date__month=month).exists():
+    if models.MonthlySummary.objects.filter(date__year=year, date__month=month).exists():
         # from database
-        summary = models.MonthlyOb.objects.filter(date__year=year, date__month=month).first()
+        summary = models.MonthlySummary.objects.filter(date__year=year, date__month=month).first()
     else:
         # calc
         summary = workflow.calc_monthly_summary(year, month)
@@ -151,9 +136,9 @@ def summaries_monthly_text(request, year, month):
 
 def summaries_monthly_csv(request, year, month):
     # get summary
-    if models.MonthlyOb.objects.filter(date__year=year, date__month=month).exists():
+    if models.MonthlySummary.objects.filter(date__year=year, date__month=month).exists():
         # from database
-        summary = models.MonthlyOb.objects.filter(date__year=year, date__month=month).first()
+        summary = models.MonthlySummary.objects.filter(date__year=year, date__month=month).first()
     else:
         # calc
         summary = workflow.calc_monthly_summary(year, month)
@@ -185,9 +170,9 @@ def summaries_annual_view(request, year):
     # get monthly summaries
     monthly_summaries = []
     for month in range(1, 13):
-        if models.MonthlyOb.objects.filter(date__year=year, date__month=month).exists():
+        if models.MonthlySummary.objects.filter(date__year=year, date__month=month).exists():
             # from database
-            monthly_summaries.append(models.MonthlyOb.objects.filter(date__year=year, date__month=month))
+            monthly_summaries.append(models.MonthlySummary.objects.filter(date__year=year, date__month=month))
         elif models.DailyOb.objects.filter(date__year=year, date__month=month).count() > 0:
             # calc
             monthly_summaries.append(workflow.calc_monthly_summary(year, month))
@@ -222,9 +207,9 @@ def summaries_annual_table(request, year):
 
     # get monthly summaries
     for month in range(1, 13):
-        if models.MonthlyOb.objects.filter(date__year=year, date__month=month).exists():
+        if models.MonthlySummary.objects.filter(date__year=year, date__month=month).exists():
             # from database
-            all_summaries.append(models.MonthlyOb.objects.filter(date__year=year, date__month=month).first())
+            all_summaries.append(models.MonthlySummary.objects.filter(date__year=year, date__month=month).first())
         elif models.DailyOb.objects.filter(date__year=year, date__month=month).count() > 0:
             # calc
             all_summaries.append(workflow.calc_monthly_summary(year, month))

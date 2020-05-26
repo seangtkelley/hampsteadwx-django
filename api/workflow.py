@@ -107,10 +107,10 @@ def calc_monthly_summary(year, month, save_to_db=False):
         summary['sf_todate_dfn'] = 0
     
     if save_to_db:
-        if models.MonthlyOb.objects.filter(date=summary['date']).exists():
-            db_summary = models.MonthlyOb.objects.filter(date=summary['date']).first().update(**summary)
+        if models.MonthlySummary.objects.filter(date=summary['date']).exists():
+            db_summary = models.MonthlySummary.objects.filter(date=summary['date']).first().update(**summary)
         else:
-            db_summary = models.MonthlyOb.objects.create(**summary)
+            db_summary = models.MonthlySummary.objects.create(**summary)
         
         return db_summary
     else:
@@ -121,9 +121,9 @@ def get_all_monthly_summaries():
     all_summaries = []
     for year in range(2010, datetime.now().year+1):
         for month in range(1, 13):
-            if models.MonthlyOb.objects.filter(date__year=year, date__month=month).exists():
+            if models.MonthlySummary.objects.filter(date__year=year, date__month=month).exists():
                 # from database
-                all_summaries.append(models.MonthlyOb.objects.filter(date__year=year, date__month=month).first())
+                all_summaries.append(models.MonthlySummary.objects.filter(date__year=year, date__month=month).first())
             elif models.DailyOb.objects.filter(date__year=year, date__month=month).count() > 0:
                 # calc
                 all_summaries.append(calc_monthly_summary(year, month))

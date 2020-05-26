@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.postgres.fields import ArrayField
 
+
 class DailyOb(models.Model):
     # meta
     date = models.DateField()
@@ -14,12 +15,7 @@ class DailyOb(models.Model):
     snowdepth = models.DecimalField(max_digits=8, decimal_places=3)
 
 
-class MonthlyOb(models.Model):
-    # meta
-    date = models.DateField() # day is always set to 1
-    remarks = models.TextField()
-    csv_filepath = models.CharField(max_length=512)
-
+class GeneralSummary(models.Model):
     # abrv key:
     # grtr = greater
     # grtst = greatest
@@ -52,8 +48,6 @@ class MonthlyOb(models.Model):
     # precip fields
     precip = models.DecimalField(max_digits=8, decimal_places=3)
     precip_dfn = models.DecimalField(max_digits=8, decimal_places=3)
-    precip_todate = models.DecimalField(max_digits=8, decimal_places=3)
-    precip_todate_dfn = models.DecimalField(max_digits=8, decimal_places=3)
     
     grtst_precip = models.DecimalField(max_digits=8, decimal_places=3)
     grtst_precip_dates = ArrayField(
@@ -68,9 +62,6 @@ class MonthlyOb(models.Model):
     # snowfall and snowdepth fields
     sf = models.DecimalField(max_digits=8, decimal_places=3)
     sf_dfn = models.DecimalField(max_digits=8, decimal_places=3)
-
-    sf_todate = models.DecimalField(max_digits=8, decimal_places=3)
-    sf_todate_dfn = models.DecimalField(max_digits=8, decimal_places=3)
 
     grtst_sf = models.DecimalField(max_digits=8, decimal_places=3)
     grtst_sf_dates = ArrayField(
@@ -95,6 +86,24 @@ class MonthlyOb(models.Model):
     sd_grtr18 = models.IntegerField()
 
 
+class MonthlySummary(GeneralSummary):
+    # meta
+    date = models.DateField() # day is always set to 1
+    remarks = models.TextField()
+    csv_filepath = models.CharField(max_length=512)
+
+    # todate fields
+    precip_todate = models.DecimalField(max_digits=8, decimal_places=3)
+    precip_todate_dfn = models.DecimalField(max_digits=8, decimal_places=3)
+
+    sf_todate = models.DecimalField(max_digits=8, decimal_places=3)
+    sf_todate_dfn = models.DecimalField(max_digits=8, decimal_places=3)
+
+
+class AnnualSummary(GeneralSummary):
+    pass
+
+
 class SunsetLakeIceInIceOut(models.Model):
     season = models.CharField(max_length=16)
     icein_date = models.DateField()
@@ -117,8 +126,3 @@ class SnowSeason(models.Model):
 
 class PeakFoliage(models.Model):
     date = models.DateField()
-
-
-class Photo(models.Model):
-    url = models.CharField(max_length=256)
-    caption = models.CharField(max_length=256)

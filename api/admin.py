@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django import forms
 
-from .models import DailyOb, MonthlyOb, SunsetLakeIceInIceOut, SnowSeason, PeakFoliage, Photo
+from .models import DailyOb, MonthlySummary, SunsetLakeIceInIceOut, SnowSeason, PeakFoliage
 
 
 @admin.register(DailyOb)
@@ -9,8 +9,8 @@ class DailyObAdmin(admin.ModelAdmin):
     list_display = ['date']
 
 
-@admin.register(MonthlyOb)
-class MonthlyObAdmin(admin.ModelAdmin):
+@admin.register(MonthlySummary)
+class MonthlySummaryAdmin(admin.ModelAdmin):
     list_display = ['get_name']
 
     def get_name(self, obj):
@@ -20,11 +20,6 @@ class MonthlyObAdmin(admin.ModelAdmin):
 @admin.register(PeakFoliage)
 class PeakFoliageAdmin(admin.ModelAdmin):
     list_display = ['date']
-
-
-@admin.register(Photo)
-class PhotoAdmin(admin.ModelAdmin):
-    list_display = ['caption']
 
 
 @admin.register(SnowSeason)

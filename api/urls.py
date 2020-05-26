@@ -12,10 +12,6 @@ urlpatterns = [
     path('info', views.info_view, name='info'),
     path('normals', views.normals_view, name='normals'),
 
-    # photos
-    path('photos', views.photos_home, name='photos_home'),
-    path('photos/submit', views.photos_submit, name='photos_submit'),
-
     # summaries
     path('summaries/monthly', views.summaries_monthly_home, name='summaries_monthly_home'),
     path('summaries/monthly/<int:year>/<int:month>/', views.summaries_monthly_view, name='summaries_monthly_view'),
