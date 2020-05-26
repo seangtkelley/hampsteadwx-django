@@ -13,6 +13,9 @@ from boilerplate.settings import BASE_DIR, TRACE_VAL
 def get_month_name(num):
     return date(1900, num, 1).strftime('%B')
 
+def get_month_abbr(num):
+    return date(1900, num, 1).strftime('%b').lower()
+
 
 def create_alert(color, body):
     return { 'color': color, 'body': body }
@@ -25,6 +28,20 @@ def add_alert(payload, color, body):
         payload['alerts'] = [ alert ]
 
     return payload
+
+def empty_snowseason(season):
+    return {
+        'season': season,
+        'oct': 0,
+        'nov': 0,
+        'dec': 0,
+        'jan': 0,
+        'feb': 0,
+        'mar': 0,
+        'apr': 0,
+        'may': 0,
+        'total': 0
+    }
 
 
 def get_normals():
@@ -129,6 +146,23 @@ def calc_monthly_summary(year, month, save_to_db=False):
             db_summary = models.MonthlySummary.objects.filter(date=summary['date']).update(**summary)
         else:
             db_summary = models.MonthlySummary.objects.create(**summary)
+        
+
+        # save snow season information
+        if month in [10, 11, 12, 1, 2, 3, 4, 5]:
+            if month in [10, 11, 12]:
+                season_str = f"{year}-{year+1}"
+            elif month in [1, 2, 3, 4, 5]:
+                season_str = f"{year-1}-{year}"
+
+            if models.SnowSeason.objects.filter(season=season_str).exists():
+                snowseason = models.SnowSeason.objects.filter(season=season_str).first()
+            else:
+                snowseason = models.SnowSeason.objects.create(**empty_snowseason(season_str))
+
+            setattr(snowseason, get_month_abbr(month), summary['sf'])
+            setattr(snowseason, 'total', getattr(snowseason, 'total') + summary['sf'])
+            snowseason.save()
         
         return db_summary
     else:
