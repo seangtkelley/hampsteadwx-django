@@ -6,7 +6,6 @@ from django.http import HttpResponse, Http404
 
 from boilerplate.settings import BASE_DIR
 from . import utils
-from . import workflow
 from . import forms
 from . import models
 
@@ -37,15 +36,15 @@ def summaries_monthly_submit(request):
 
                 # process csv
                 try:
-                    year, month = workflow.process_csv(filepath)
+                    year, month = utils.process_csv(filepath)
                 except Exception as e:
                     payload = utils.add_alert(payload, 'danger', f"Error occurred while processing csv: <code>{str(e)}</code>")
                     return render(request, 'summaries/monthly/submit.html', payload)
 
                 # calculate and save summaries
                 try:
-                    workflow.calc_monthly_summary(year, month, save_to_db=True)
-                    workflow.calc_annual_summary(year, save_to_db=True)
+                    utils.calc_monthly_summary(year, month, save_to_db=True)
+                    utils.calc_annual_summary(year, save_to_db=True)
                 except Exception as e:
                     payload = utils.add_alert(payload, 'danger', f"Error occurred while calculating summary: <code>{str(e)}</code>")
                     return render(request, 'summaries/monthly/submit.html', payload)
@@ -113,7 +112,7 @@ def summaries_monthly_text(request, year, month):
         # summary not found
         raise Http404
 
-    normals = workflow.get_normals()
+    normals = utils.get_normals()
     payload['AVG_TEMP'] = normals['temp'][month-1]
     payload['AVG_PRECIP'] = normals['precip'][month-1]
     payload['AVG_SNFL'] = normals['sf'][month-1]
@@ -127,7 +126,7 @@ def summaries_monthly_csv(request, year, month):
         summary = models.MonthlySummary.objects.filter(date__year=year, date__month=month).first()
     else:
         # calc
-        summary = workflow.calc_monthly_summary(year, month)
+        summary = utils.calc_monthly_summary(year, month)
 
     if summary is not None and os.path.exists(getattr(summary, 'csv_filepath')):
         # read csv and build response
@@ -166,7 +165,7 @@ def summaries_annual_text(request, year):
     else:
         raise Http404
 
-    normals = workflow.get_normals()
+    normals = utils.get_normals()
     payload['AVG_TEMP'] = normals['temp'][12]
     payload['AVG_PRECIP'] = normals['precip'][12]
     payload['AVG_SNFL'] = normals['sf'][12]
