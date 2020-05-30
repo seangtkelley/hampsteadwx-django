@@ -34,7 +34,7 @@ def summaries_monthly_submit(request):
         # calc monthly summary
         form = forms.SubmitMonthlyCSV(request.POST, request.FILES)
         if form.is_valid():
-            if form.cleaned_data['password'] == os.environ['SITE_PASS']:
+            if form.cleaned_data['password'] == os.environ.get('SITE_PASS'):
                 # move csv file
                 filepath = os.path.join(BASE_DIR, 'assets', 'csv', request.FILES['csv_file'].name)
                 with open(filepath, 'wb+') as dest:
@@ -77,7 +77,7 @@ def summaries_monthly_view(request, year, month):
         # edit remarks
         form = forms.EditRemarks(request.POST)
         if form.is_valid():
-            if form.cleaned_data['password'] == os.environ['SITE_PASS']:
+            if form.cleaned_data['password'] == os.environ.get('SITE_PASS']:
                 # find summary
                 if models.MonthlySummary.objects.filter(date__year=year, date__month=month).exists():
                     summary = models.MonthlySummary.objects.filter(date__year=year, date__month=month).first()

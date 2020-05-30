@@ -18,7 +18,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ['SECRET_KEY']
+SECRET_KEY = os.environ.get('SECRET_KEY')
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.0/howto/deployment/checklist/
@@ -71,7 +71,7 @@ WSGI_APPLICATION = 'boilerplate.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
 
-DATABASES = { 'default': dj_database_url.parse(os.environ['DATABASE_URL'], conn_max_age=600) }
+DATABASES = { 'default': dj_database_url.parse(os.environ.get('DATABASE_URL'), conn_max_age=600) }
 
 
 # Password validation
@@ -126,4 +126,4 @@ TRACE_VAL = 0.001
 
 
 # secret settings
-# from .settings_secret import *
+from .settings_secret import *
