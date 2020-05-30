@@ -126,4 +126,4 @@ TRACE_VAL = 0.001
 
 
 # secret settings
-from .settings_secret import *
+# from .settings_secret import *
