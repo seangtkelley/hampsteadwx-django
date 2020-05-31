@@ -77,7 +77,7 @@ def summaries_monthly_view(request, year, month):
         # edit remarks
         form = forms.EditRemarks(request.POST)
         if form.is_valid():
-            if form.cleaned_data['password'] == os.environ.get('SITE_PASS']:
+            if form.cleaned_data['password'] == os.environ.get('SITE_PASS'):
                 # find summary
                 if models.MonthlySummary.objects.filter(date__year=year, date__month=month).exists():
                     summary = models.MonthlySummary.objects.filter(date__year=year, date__month=month).first()
