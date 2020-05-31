@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django import forms
 
-from .models import DailyOb, MonthlySummary, SunsetLakeIceInIceOut, SnowSeason, PeakFoliage
+from .models import DailyOb, MonthlySummary, AnnualSummary, SunsetLakeIceInIceOut, SnowSeason, PeakFoliage
 
 
 @admin.register(DailyOb)
@@ -15,6 +15,11 @@ class MonthlySummaryAdmin(admin.ModelAdmin):
 
     def get_name(self, obj):
         return obj.date.strftime('%B %Y')
+
+
+@admin.register(AnnualSummary)
+class AnnualSummaryAdmin(admin.ModelAdmin):
+    list_display = ['year']
 
 
 @admin.register(PeakFoliage)
