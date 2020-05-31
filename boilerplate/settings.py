@@ -25,6 +25,10 @@ SECRET_KEY = os.environ.get('SECRET_KEY')
 
 ALLOWED_HOSTS = ['.herokuapp.com']
 
+# X Frame options
+X_FRAME_OPTIONS = 'SAMEORIGIN'
+
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -45,6 +49,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
 ]
 
 ROOT_URLCONF = 'boilerplate.urls'
@@ -113,8 +118,12 @@ USE_TZ = True
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATIC_URL = "/static/"
 
-# X Frame options
-X_FRAME_OPTIONS = 'SAMEORIGIN'
+
+# Simplified static file serving.
+# https://warehouse.python.org/project/whitenoise/
+
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
 
 # trace value
 TRACE_VAL = 0.001
