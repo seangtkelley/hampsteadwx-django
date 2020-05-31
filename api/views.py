@@ -36,7 +36,7 @@ def summaries_monthly_submit(request):
         if form.is_valid():
             if form.cleaned_data['password'] == os.environ.get('SITE_PASS'):
                 # move csv file
-                filepath = os.path.join(BASE_DIR, 'assets', 'csv', request.FILES['csv_file'].name)
+                filepath = os.path.join(BASE_DIR, 'static', 'csv', request.FILES['csv_file'].name)
                 with open(filepath, 'wb+') as dest:
                     for chunk in request.FILES['csv_file'].chunks():
                         dest.write(chunk)

@@ -46,7 +46,7 @@ def empty_snowseason(season):
 
 def get_normals():
     normals = {}
-    filepath = os.path.join(BASE_DIR, 'assets', 'csv', 'HMPN3-Monthly-Climate-Normals.csv')
+    filepath = os.path.join(BASE_DIR, 'static', 'csv', 'HMPN3-Monthly-Climate-Normals.csv')
     with open(filepath) as f:
         lines = f.readlines()
         normals['temp'] = list(map(Decimal, lines[0].split(',')))
