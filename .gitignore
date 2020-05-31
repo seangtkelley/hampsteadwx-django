@@ -6,7 +6,6 @@ db.sqlite3
 .vscode/
 
 settings_secret.py
-static/
-\.ipynb_checkpoints/
+.ipynb_checkpoints/
 staticfiles/
 assets/csv/
