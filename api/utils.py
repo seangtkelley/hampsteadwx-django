@@ -233,10 +233,10 @@ def calc_general_summary(df):
         'grtst_precip': Decimal(df.precip.max()),
         'grtst_precip_dates': [] if df.precip.max() == 0 else list(df[df.precip == df.precip.max()].date),
         'precip_grtrT': len(df[df.precip >= TRACE_VAL]), # trace (T)
-        'precip_grtr01': len(df[df.precip >= 0.01]), # 01 = 0.01"
-        'precip_grtr10': len(df[df.precip >= 0.10]), # 10 = 0.10"
-        'precip_grtr50': len(df[df.precip >= 0.50]),
-        'precip_grtr100': len(df[df.precip >= 1.00]),
+        'precip_grtr01': len(df[df.precip >= 0.01000]), # 01 = 0.01"
+        'precip_grtr10': len(df[df.precip >= 0.10000]), # 10 = 0.10"
+        'precip_grtr50': len(df[df.precip >= 0.50000]),
+        'precip_grtr100': len(df[df.precip >= int(1)]),
 
         # snowfall and snowdepth fields
         'sf': TRACE_VAL if Decimal(df.snowfall.max()) == TRACE_VAL else Decimal(sum(df[df.snowfall != TRACE_VAL].snowfall)),
@@ -244,18 +244,18 @@ def calc_general_summary(df):
         'grtst_sf': Decimal(df.snowfall.max()),
         'grtst_sf_dates': [] if df.snowfall.max() == 0 else list(df[df.snowfall == df.snowfall.max()].date),
         'sf_grtrT': len(df[df.snowfall >= TRACE_VAL]),
-        'sf_grtr1': len(df[df.snowfall >= 1]), # in.
-        'sf_grtr3': len(df[df.snowfall >= 3]),
-        'sf_grtr6': len(df[df.snowfall >= 6]),
-        'sf_grtr12': len(df[df.snowfall >= 12]),
-        'sf_grtr18': len(df[df.snowfall >= 18]),
+        'sf_grtr1': len(df[df.snowfall >= int(1)]), # in.
+        'sf_grtr3': len(df[df.snowfall >= int(3)]),
+        'sf_grtr6': len(df[df.snowfall >= int(6)]),
+        'sf_grtr12': len(df[df.snowfall >= int(12)]),
+        'sf_grtr18': len(df[df.snowfall >= int(18)]),
 
         'grtst_sd': Decimal(df.snowdepth.max()),
         'grtst_sd_dates': [] if df.snowdepth.max() == 0 else list(df[df.snowdepth == df.snowdepth.max()].date),
         'sd_grtrT': len(df[df.snowdepth >= TRACE_VAL]),
-        'sd_grtr1': len(df[df.snowdepth >= 1]), # in.
-        'sd_grtr3': len(df[df.snowdepth >= 3]),
-        'sd_grtr6': len(df[df.snowdepth >= 6]),
-        'sd_grtr12': len(df[df.snowdepth >= 12]),
-        'sd_grtr18': len(df[df.snowdepth >= 18])
+        'sd_grtr1': len(df[df.snowdepth >= int(1)]), # in.
+        'sd_grtr3': len(df[df.snowdepth >= int(3)]),
+        'sd_grtr6': len(df[df.snowdepth >= int(6)]),
+        'sd_grtr12': len(df[df.snowdepth >= int(12)]),
+        'sd_grtr18': len(df[df.snowdepth >= int(18)])
     }

@@ -131,7 +131,7 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 
 # trace value
-TRACE_VAL = 0.001
+TRACE_VAL = 0.00100
 
 
 # secret settings
