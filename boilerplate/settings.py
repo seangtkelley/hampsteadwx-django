@@ -76,7 +76,7 @@ WSGI_APPLICATION = 'boilerplate.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
 
-# DATABASES = { 'default': dj_database_url.parse(os.environ.get('DATABASE_URL'), conn_max_age=600) }
+DATABASES = { 'default': dj_database_url.parse(os.environ.get('DATABASE_URL'), conn_max_age=600) }
 
 
 # Password validation
@@ -135,4 +135,4 @@ TRACE_VAL = 0.00100
 
 
 # secret settings
-from .settings_secret import *
+# from .settings_secret import *
