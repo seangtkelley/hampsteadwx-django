@@ -103,6 +103,7 @@ def calc_monthly_summary(year, month, save_to_db=False):
 
     # convert to dataframe
     df = pd.DataFrame.from_records(obs.values())
+    df[["max_temp", "min_temp", "atob_temp", "precip", "snowfall", "snowdepth"]] = df[["max_temp", "min_temp", "atob_temp", "precip", "snowfall", "snowdepth"]].apply(pd.to_numeric)
 
     # calc general
     summary = calc_general_summary(df)
