@@ -225,8 +225,8 @@ def calc_general_summary(df):
 
         'avg_temp': Decimal(df[['max_temp', 'min_temp']].mean(axis=1).mean()),
 
-        'hdd_count': round(sum(df[(df[['max_temp', 'min_temp']].mean(axis=1) - 65) > 0][['max_temp', 'min_temp']].mean(axis=1) - 65)),
-        'cdd_count': abs(round(sum(df[(df[['max_temp', 'min_temp']].mean(axis=1) - 65) < 0][['max_temp', 'min_temp']].mean(axis=1) - 65))),
+        'hdd_count': abs(round(sum(df[(df[['max_temp', 'min_temp']].mean(axis=1)) < 65][['max_temp', 'min_temp']].mean(axis=1) - 65))),
+        'cdd_count': round(sum(df[(df[['max_temp', 'min_temp']].mean(axis=1)) > 65][['max_temp', 'min_temp']].mean(axis=1) - 65)),
 
         # precip fields
         'precip': TRACE_VAL if Decimal(df.precip.max()) == TRACE_VAL else Decimal(sum(df[df.precip != TRACE_VAL].precip)),
