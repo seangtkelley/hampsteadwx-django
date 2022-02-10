@@ -8,4 +8,3 @@ db.sqlite3
 settings_secret.py
 .ipynb_checkpoints/
 staticfiles/
-static/csv/
