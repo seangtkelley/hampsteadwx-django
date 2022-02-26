@@ -172,7 +172,8 @@ def summaries_annual_text(request, year):
     else:
         raise Http404
 
-    normals = utils.get_normals(year, 12)
+    # use 1 (Jan) for month so that 2020 annual summary will use pre-2020 normals
+    normals = utils.get_normals(year, 1)
     payload['AVG_TEMP'] = normals['temp'][12]
     payload['AVG_PRECIP'] = normals['precip'][12]
     payload['AVG_SNFL'] = normals['sf'][12]

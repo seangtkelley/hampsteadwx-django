@@ -54,9 +54,9 @@ def get_normals(year, month):
         normals['sf'] = list(df['MLY-SNOW-NORMAL'])
 
         # calc annual norms
-        normals['temp'][12] = round(np.mean(normals['temp']), 1)
-        normals['precip'][12] = round(np.mean(normals['precip']), 2)
-        normals['sf'][12] = round(np.mean(normals['sf']), 1j)
+        normals['temp'].append(round(np.mean(normals['temp']), 1))
+        normals['precip'].append(round(np.mean(normals['precip']), 2))
+        normals['sf'].append(round(np.mean(normals['sf']), 1))
     else: 
         filepath = os.path.join(BASE_DIR, 'static', 'csv', 'HMPN3-Monthly-Climate-Normals.csv')
         with open(filepath) as f:
@@ -198,7 +198,8 @@ def calc_annual_summary(year, save_to_db=False):
     summary['year'] = year
 
     # add annual specific fields
-    normals = get_normals(year, 12)
+    # use 1 (Jan) for month so that 2020 annual summary will use pre-2020 normals
+    normals = get_normals(year, 1)
     summary['avg_temp_dfn'] = summary['avg_temp'] - normals['temp'][12]
     summary['precip_dfn'] = summary['precip'] - normals['precip'][12]
     summary['sf_dfn'] = summary['sf'] - normals['sf'][12]
