@@ -46,7 +46,7 @@ def empty_snowseason(season):
 
 def get_normals(year): #, month):
     normals = {}
-    if year >= 2021: # or (year == 2020 and month > 6):
+    if year >= 2022: # or (year == 2020 and month > 6):
         filepath = os.path.join(BASE_DIR, 'static', 'csv', 'normals-monthly-1991-2020-2022-01-23T16-24-36.csv')
         df = pd.read_csv(filepath)
         normals['temp'] = list(df['MLY-TAVG-NORMAL'])
