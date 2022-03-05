@@ -119,7 +119,8 @@ def summaries_monthly_text(request, year, month):
         # summary not found
         raise Http404
 
-    normals = utils.get_normals()
+    # get normals
+    normals = utils.get_normals(year)
     payload['AVG_TEMP'] = normals['temp'][month-1]
     payload['AVG_PRECIP'] = normals['precip'][month-1]
     payload['AVG_SNFL'] = normals['sf'][month-1]
@@ -172,7 +173,8 @@ def summaries_annual_text(request, year):
     else:
         raise Http404
 
-    normals = utils.get_normals()
+    # get normals
+    normals = utils.get_normals(year)
     payload['AVG_TEMP'] = normals['temp'][12]
     payload['AVG_PRECIP'] = normals['precip'][12]
     payload['AVG_SNFL'] = normals['sf'][12]

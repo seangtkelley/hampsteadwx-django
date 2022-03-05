@@ -44,14 +44,26 @@ def empty_snowseason(season):
     }
 
 
-def get_normals():
+def get_normals(year): #, month):
     normals = {}
-    filepath = os.path.join(BASE_DIR, 'static', 'csv', 'HMPN3-Monthly-Climate-Normals.csv')
-    with open(filepath) as f:
-        lines = f.readlines()
-        normals['temp'] = list(map(Decimal, lines[0].split(',')))
-        normals['precip'] = list(map(Decimal, lines[1].split(',')))
-        normals['sf'] = list(map(Decimal, lines[2].split(',')))
+    if year >= 2022: # or (year == 2020 and month > 6):
+        filepath = os.path.join(BASE_DIR, 'static', 'csv', 'normals-monthly-1991-2020-2022-01-23T16-24-36.csv')
+        df = pd.read_csv(filepath)
+        normals['temp'] = list(df['MLY-TAVG-NORMAL'])
+        normals['precip'] = list(df['MLY-PRCP-NORMAL'])
+        normals['sf'] = list(df['MLY-SNOW-NORMAL'])
+
+        # calc annual norms
+        normals['temp'].append(round(np.mean(normals['temp']), 1))
+        normals['precip'].append(round(np.mean(normals['precip']), 2))
+        normals['sf'].append(round(np.mean(normals['sf']), 1))
+    else: 
+        filepath = os.path.join(BASE_DIR, 'static', 'csv', 'HMPN3-Monthly-Climate-Normals.csv')
+        with open(filepath) as f:
+            lines = f.readlines()
+            normals['temp'] = list(map(Decimal, lines[0].split(',')))
+            normals['precip'] = list(map(Decimal, lines[1].split(',')))
+            normals['sf'] = list(map(Decimal, lines[2].split(',')))
 
     return normals
 
@@ -113,7 +125,7 @@ def calc_monthly_summary(year, month, save_to_db=False):
     summary['csv_filepath'] = df.iloc[0].csv_filepath
 
     # add month specific fields
-    normals = get_normals()
+    normals = get_normals(year)
     summary['avg_temp_dfn'] = summary['avg_temp'] - normals['temp'][month-1]
     summary['precip_dfn'] = summary['precip'] - normals['precip'][month-1]
     summary['sf_dfn'] = summary['sf'] - normals['sf'][month-1]
@@ -186,7 +198,7 @@ def calc_annual_summary(year, save_to_db=False):
     summary['year'] = year
 
     # add annual specific fields
-    normals = get_normals()
+    normals = get_normals(year)
     summary['avg_temp_dfn'] = summary['avg_temp'] - normals['temp'][12]
     summary['precip_dfn'] = summary['precip'] - normals['precip'][12]
     summary['sf_dfn'] = summary['sf'] - normals['sf'][12]
