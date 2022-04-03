@@ -3,19 +3,39 @@ from api.models import MonthlySummary, AnnualSummary
 from api import utils
 
 class Command(BaseCommand):
-    help = 'Recalculate all summaries. Helpful if changes/additions are made to calculation code.'
+    help = 'Recalculate summaries. Helpful if changes/additions are made to calculation code.'
+
+    def add_arguments(self, parser):
+        parser.add_argument("-m", "--month", type=int, nargs='+', help="Month to recalculate. Requires --year arg.")
+        parser.add_argument("-y", "--year", type=int, nargs='+', help="Year to recalculate. Assumes annual summary if month not present.")
+
+        parser.add_argument('--all', action='store_true', help='Recalculate all summaries')
 
     def handle(self, *args, **options):
-        # get all monthly summaries
-        all_monthly_summaries = MonthlySummary.objects.all()
+
+        if options['all']:
+            # get all monthly summaries
+            monthly_summaries = MonthlySummary.objects.all()
+
+            # get all annual summaries
+            annual_summaries = AnnualSummary.objects.all()
+
+        elif 'month' in options:
+            if 'year' not in options:
+                pass
+
+            monthly_summaries = MonthlySummary.objects.filter()
+            annual_summaries = AnnualSummary.objects.filter()
+        
+        elif 'year' in options:
+
+            annual_summaries = AnnualSummary.objects.filter()
+
 
         # loop thru and recalc each
-        for summary in all_monthly_summaries:
+        for summary in monthly_summaries:
             utils.calc_monthly_summary(summary.date.year, summary.date.year, save_to_db=True)
 
-        # get all annual summaries
-        all_annual_summaries = AnnualSummary.objects.all()
-
         # loop thru and recalc each
-        for summary in all_annual_summaries:
+        for summary in annual_summaries:
             utils.calc_annual_summary(summary.year, save_to_db=True)
