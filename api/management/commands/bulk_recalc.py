@@ -6,30 +6,28 @@ class Command(BaseCommand):
     help = 'Recalculate summaries. Helpful if changes/additions are made to calculation code.'
 
     def add_arguments(self, parser):
-        parser.add_argument("-m", "--month", type=int, nargs='+', help="Month to recalculate. Requires --year arg.")
-        parser.add_argument("-y", "--year", type=int, nargs='+', help="Year to recalculate. Assumes annual summary if month not present.")
+        parser.add_argument("-m", "--months", type=int, nargs='*', help="Months to recalculate.")
+        parser.add_argument("-y", "--years", type=int, nargs='*', help="Years to recalculate. Assumes only annual summaries if --months not present.")
 
         parser.add_argument('--all', action='store_true', help='Recalculate all summaries')
 
     def handle(self, *args, **options):
+        monthly_summaries, annual_summaries = [], []
 
         if options['all']:
-            # get all monthly summaries
             monthly_summaries = MonthlySummary.objects.all()
-
-            # get all annual summaries
             annual_summaries = AnnualSummary.objects.all()
 
-        elif 'month' in options:
-            if 'year' not in options:
-                pass
-
-            monthly_summaries = MonthlySummary.objects.filter()
-            annual_summaries = AnnualSummary.objects.filter()
+        elif 'months' in options:
+            if 'years' not in options:
+                monthly_summaries = MonthlySummary.objects.filter(date__month__in=options['months'])
+                annual_summaries = AnnualSummary.objects.all()
+            else:
+                monthly_summaries = MonthlySummary.objects.filter(date__year__in=options['years'], date__month__in=options['months'])
+                annual_summaries = AnnualSummary.objects.filter(year__in=options['years'])
         
-        elif 'year' in options:
-
-            annual_summaries = AnnualSummary.objects.filter()
+        elif 'years' in options:
+            annual_summaries = AnnualSummary.objects.filter(year__in=options['years'])
 
 
         # loop thru and recalc each
