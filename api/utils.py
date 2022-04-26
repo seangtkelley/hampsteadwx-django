@@ -48,7 +48,8 @@ def get_normals(year): #, month):
     normals = {}
     if year >= 2022: # or (year == 2020 and month > 6):
         filepath = os.path.join(BASE_DIR, 'static', 'csv', 'normals-monthly-1991-2020-2022-01-23T16-24-36.csv')
-        df = pd.read_csv(filepath)
+        decimal_converter = lambda x: Decimal(x)
+        df = pd.read_csv(filepath, converters={'MLY-TAVG-NORMAL': decimal_converter, 'MLY-PRCP-NORMAL': decimal_converter,'MLY-SNOW-NORMAL': decimal_converter})
         normals['temp'] = list(df['MLY-TAVG-NORMAL'])
         normals['precip'] = list(df['MLY-PRCP-NORMAL'])
         normals['sf'] = list(df['MLY-SNOW-NORMAL'])
