@@ -1,4 +1,4 @@
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 from api.models import MonthlySummary, AnnualSummary
 from api import utils
 
@@ -15,19 +15,25 @@ class Command(BaseCommand):
         monthly_summaries, annual_summaries = [], []
 
         if options['all']:
-            monthly_summaries = MonthlySummary.objects.all()
-            annual_summaries = AnnualSummary.objects.all()
-
-        elif 'months' in options:
-            if 'years' not in options:
-                monthly_summaries = MonthlySummary.objects.filter(date__month__in=options['months'])
+            if options['months'] is not None and options['years'] is None:
+                monthly_summaries = MonthlySummary.objects.all()
+            elif options['years'] is not None and options['months'] is None:
                 annual_summaries = AnnualSummary.objects.all()
             else:
+                monthly_summaries = MonthlySummary.objects.all()
+                annual_summaries = AnnualSummary.objects.all()
+
+        elif options['months'] is not None and len(options['months']) > 0:
+            if options['years'] is not None and len(options['years']) > 0:
                 monthly_summaries = MonthlySummary.objects.filter(date__year__in=options['years'], date__month__in=options['months'])
-                annual_summaries = AnnualSummary.objects.filter(year__in=options['years'])
+            else:
+                monthly_summaries = MonthlySummary.objects.filter(date__month__in=options['months'])
         
-        elif 'years' in options:
+        elif options['years'] is not None and len(options['years']) > 0:
             annual_summaries = AnnualSummary.objects.filter(year__in=options['years'])
+
+        else:
+            raise CommandError("Missing or malformed arguments.")
 
 
         # loop thru and recalc each
