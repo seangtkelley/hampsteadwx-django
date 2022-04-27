@@ -29,14 +29,14 @@ class Command(BaseCommand):
 
         elif options['months'] is not None and len(options['months']) > 0:
             if options['years'] is not None and len(options['years']) > 0:
-                logging.info(f"Recalculating monthly summaries for months: {','.join(options['months'])} and years: {','.join(options['years'])}...")
+                logging.info(f"Recalculating monthly summaries for months: {options['months']} and years: {options['years']}...")
                 monthly_summaries = MonthlySummary.objects.filter(date__year__in=options['years'], date__month__in=options['months'])
             else:
-                logging.info(f"Recalculating monthly summaries for months: {','.join(options['months'])} and years: all...")
+                logging.info(f"Recalculating monthly summaries for months: {options['months']} and years: all...")
                 monthly_summaries = MonthlySummary.objects.filter(date__month__in=options['months'])
         
         elif options['years'] is not None and len(options['years']) > 0:
-            logging.info(f"Recalculating annual summaries for years: {','.join(options['years'])}...")
+            logging.info(f"Recalculating annual summaries for years: {options['years']}...")
             annual_summaries = AnnualSummary.objects.filter(year__in=options['years'])
 
         else:
