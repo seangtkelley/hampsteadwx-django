@@ -78,6 +78,7 @@ WSGI_APPLICATION = 'boilerplate.wsgi.application'
 
 DATABASES = { 'default': dj_database_url.parse(os.environ.get('DATABASE_URL'), conn_max_age=600) }
 
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
 # Password validation
 # https://docs.djangoproject.com/en/3.0/ref/settings/#auth-password-validators
