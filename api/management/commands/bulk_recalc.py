@@ -1,7 +1,9 @@
-from tqdm import tqdm
 from django.core.management.base import BaseCommand, CommandError
-from api.models import MonthlySummary, AnnualSummary
+from tqdm import tqdm
+
 from api import utils
+from api.models import AnnualSummary, MonthlySummary
+
 
 class Command(BaseCommand):
     help = 'Recalculate summaries. Helpful if changes/additions are made to calculation code.'
@@ -34,14 +36,13 @@ class Command(BaseCommand):
             else:
                 print(f"Recalculating monthly summaries for months: {options['months']} and years: all...")
                 monthly_summaries = MonthlySummary.objects.filter(date__month__in=options['months'])
-        
+
         elif options['years'] is not None and len(options['years']) > 0:
             print(f"Recalculating annual summaries for years: {options['years']}...")
             annual_summaries = AnnualSummary.objects.filter(year__in=options['years'])
 
         else:
             raise CommandError("Missing or malformed arguments.")
-
 
         # loop thru and recalc each
         for summary in tqdm(monthly_summaries):

@@ -1,34 +1,36 @@
 import os
-from datetime import datetime
+import pathlib
 
+from django.http import Http404, HttpResponse
 from django.shortcuts import render
-from django.http import HttpResponse, Http404
 
 from boilerplate.settings import BASE_DIR
-from . import utils
-from . import forms
-from . import models
+
+from . import forms, models, utils
 
 
 def handler404(request, *args, **argv):
     return render(request, '404.html', status=404)
+
 
 def handler500(request, *args, **argv):
     return render(request, '500.html', status=500)
 
 
 def index(request):
-    return render(request, 'index.html', { 'title': "Home" })
+    return render(request, 'index.html', {'title': "Home"})
+
 
 def info_view(request):
-    return render(request, 'info.html', { 'title': "Info" })
+    return render(request, 'info.html', {'title': "Info"})
+
 
 def normals_view(request):
-    return render(request, 'normals.html', { 'title': "Normals" })
+    return render(request, 'normals.html', {'title': "Normals"})
 
 
 def summaries_monthly_submit(request):
-    payload = { 'title': f"Submit Monthly Summary" }
+    payload = {'title': "Submit Monthly Summary"}
 
     if request.method == 'POST':
         # calc monthly summary
@@ -37,7 +39,7 @@ def summaries_monthly_submit(request):
             if form.cleaned_data['password'] == os.environ.get('SITE_PASS'):
                 # move csv file
                 filepath = os.path.join(BASE_DIR, 'static', 'csv', request.FILES['csv_file'].name)
-                with open(filepath, 'wb+') as dest:
+                with pathlib.Path(filepath).open('wb+') as dest:
                     for chunk in request.FILES['csv_file'].chunks():
                         dest.write(chunk)
 
@@ -45,7 +47,7 @@ def summaries_monthly_submit(request):
                 try:
                     year, month = utils.process_csv(filepath)
                 except Exception as e:
-                    payload = utils.add_alert(payload, 'danger', f"Error occurred while processing csv: <code>{str(e)}</code>")
+                    payload = utils.add_alert(payload, 'danger', f"Error occurred while processing csv: <code>{e!s}</code>")
                     return render(request, 'summaries/monthly/submit.html', payload)
 
                 # calculate and save summaries
@@ -53,25 +55,27 @@ def summaries_monthly_submit(request):
                     utils.calc_monthly_summary(year, month, save_to_db=True)
                     utils.calc_annual_summary(year, save_to_db=True)
                 except Exception as e:
-                    payload = utils.add_alert(payload, 'danger', f"Error occurred while calculating summary: <code>{str(e)}</code>")
+                    payload = utils.add_alert(payload, 'danger', f"Error occurred while calculating summary: <code>{e!s}</code>")
                     return render(request, 'summaries/monthly/submit.html', payload)
 
                 # prompt redirect
                 payload = utils.add_alert(payload, 'success', f"{utils.get_month_name(month)} {year} monthly data successfully processed. <a href='/summaries/monthly/{year}/{month}'>View summary <i class='fa fa-external-link'></i></a>")
-            
+
             else:
                 payload = utils.add_alert(payload, 'danger', "Incorrect password")
-        
+
         else:
             payload = utils.add_alert(payload, 'danger', "Form data invalid.")
 
     return render(request, 'summaries/monthly/submit.html', payload)
 
+
 def summaries_monthly_home(request):
-    return render(request, 'summaries/monthly/view.html', { 'title': "View Monthly Summary" })
+    return render(request, 'summaries/monthly/view.html', {'title': "View Monthly Summary"})
+
 
 def summaries_monthly_view(request, year, month):
-    payload = { 'title': f"{utils.get_month_name(month)} {year} Monthly Summary" }
+    payload = {'title': f"{utils.get_month_name(month)} {year} Monthly Summary"}
 
     if request.method == 'POST':
         # edit remarks
@@ -87,16 +91,16 @@ def summaries_monthly_view(request, year, month):
                 # edit remarks
                 summary.remarks = form.cleaned_data['remarks']
                 summary.save()
-                
+
                 # display alert
                 payload = utils.add_alert(payload, 'success', f"{utils.get_month_name(month)} {year} remarks saved.")
-            
+
             else:
                 payload = utils.add_alert(payload, 'danger', "Incorrect password")
-        
+
         else:
             payload = utils.add_alert(payload, 'danger', "Form data invalid.")
-    
+
     # get monthly summary
     if models.MonthlySummary.objects.filter(date__year=year, date__month=month).exists():
         payload['monthly_summary'] = models.MonthlySummary.objects.filter(date__year=year, date__month=month).first()
@@ -108,8 +112,9 @@ def summaries_monthly_view(request, year, month):
 
     return render(request, 'summaries/monthly/view.html', payload)
 
+
 def summaries_monthly_text(request, year, month):
-    payload = { 'title': f"{utils.get_month_name(month)} {year} Monthly Summary" }
+    payload = {'title': f"{utils.get_month_name(month)} {year} Monthly Summary"}
 
     # get monthly summary
     if models.MonthlySummary.objects.filter(date__year=year, date__month=month).exists():
@@ -121,11 +126,12 @@ def summaries_monthly_text(request, year, month):
 
     # get normals
     normals = utils.get_normals(year)
-    payload['AVG_TEMP'] = normals['temp'][month-1]
-    payload['AVG_PRECIP'] = normals['precip'][month-1]
-    payload['AVG_SNFL'] = normals['sf'][month-1]
+    payload['AVG_TEMP'] = normals['temp'][month - 1]
+    payload['AVG_PRECIP'] = normals['precip'][month - 1]
+    payload['AVG_SNFL'] = normals['sf'][month - 1]
 
     return render(request, 'summaries/monthly/text.html', payload)
+
 
 def summaries_monthly_csv(request, year, month):
     # get summary
@@ -136,11 +142,11 @@ def summaries_monthly_csv(request, year, month):
         # calc
         summary = utils.calc_monthly_summary(year, month)
 
-    if summary is not None and os.path.exists(getattr(summary, 'csv_filepath')):
+    if summary is not None and pathlib.Path(summary.csv_filepath).exists():
         # read csv and build response
-        with open(getattr(summary, 'csv_filepath'), 'r') as fh:
+        with pathlib.Path(summary.csv_filepath).open('r') as fh:
             response = HttpResponse(fh.read(), content_type="text/csv")
-            response['Content-Disposition'] = f"attachment; filename={getattr(summary, 'csv_filepath').split('/')[-1]}"
+            response['Content-Disposition'] = f"attachment; filename={summary.csv_filepath.split('/')[-1]}"
             return response
 
     # csv not found
@@ -148,10 +154,11 @@ def summaries_monthly_csv(request, year, month):
 
 
 def summaries_annual_home(request):
-    return render(request, 'summaries/annual/view.html', { 'title': "View Annual Summary" })
+    return render(request, 'summaries/annual/view.html', {'title': "View Annual Summary"})
+
 
 def summaries_annual_view(request, year):
-    payload = { 'title': f"{year} Annual Summary" }
+    payload = {'title': f"{year} Annual Summary"}
 
     # get annual summary
     if models.AnnualSummary.objects.filter(year=year).exists():
@@ -164,8 +171,9 @@ def summaries_annual_view(request, year):
 
     return render(request, 'summaries/annual/view.html', payload)
 
+
 def summaries_annual_text(request, year):
-    payload = { 'title': f"{year} Annual Summary" }
+    payload = {'title': f"{year} Annual Summary"}
 
     # get annual summary
     if models.AnnualSummary.objects.filter(year=year).exists():
@@ -181,8 +189,9 @@ def summaries_annual_text(request, year):
 
     return render(request, 'summaries/annual/text.html', payload)
 
+
 def summaries_annual_table(request, year):
-    payload = { 'title': f"{year} Annual Summary" }
+    payload = {'title': f"{year} Annual Summary"}
 
     # get annual summary
     if models.AnnualSummary.objects.filter(year=year).exists():
@@ -198,15 +207,16 @@ def summaries_annual_table(request, year):
 
 
 def summaries_snowseason_view(request):
-    payload = { 'title': "Snow Season" }
+    payload = {'title': "Snow Season"}
 
     # get snow seasons
     payload['summaries'] = models.SnowSeason.objects.all().order_by('season')
 
     return render(request, 'summaries/snowseason/view.html', payload)
 
+
 def summaries_snowseason_season(request, season):
-    payload = { 'title': f"{season} Snow Season" }
+    payload = {'title': f"{season} Snow Season"}
 
     # get snow season
     payload['summary'] = models.SnowSeason.objects.filter(season=season).first()
@@ -219,7 +229,7 @@ def summaries_snowseason_season(request, season):
 
 
 def summaries_peakfoliage_view(request):
-    payload = { 'title': "Peak Foliage" }
+    payload = {'title': "Peak Foliage"}
 
     # get peak foliage dates
     payload['peaks'] = models.PeakFoliage.objects.all().order_by('date')
@@ -228,7 +238,7 @@ def summaries_peakfoliage_view(request):
 
 
 def summaries_sunsetlake_view(request):
-    payload = { 'title': "Sunset Lake Ice In/Ice Out" }
+    payload = {'title': "Sunset Lake Ice In/Ice Out"}
 
     # get sunset lake summaries
     payload['summaries'] = models.SunsetLakeIceInIceOut.objects.all().order_by('season')
@@ -237,7 +247,7 @@ def summaries_sunsetlake_view(request):
 
 
 def summaries_precip_view(request):
-    payload = { 'title': "Precipitation" }
+    payload = {'title': "Precipitation"}
 
     # get monthly summaries
     payload['summaries'] = models.MonthlySummary.objects.all().order_by('date')

@@ -1,7 +1,14 @@
-from django.contrib import admin
 from django import forms
+from django.contrib import admin
 
-from .models import DailyOb, MonthlySummary, AnnualSummary, SunsetLakeIceInIceOut, SnowSeason, PeakFoliage
+from .models import (
+    AnnualSummary,
+    DailyOb,
+    MonthlySummary,
+    PeakFoliage,
+    SnowSeason,
+    SunsetLakeIceInIceOut,
+)
 
 
 @admin.register(DailyOb)

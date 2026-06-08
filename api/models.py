@@ -1,5 +1,5 @@
-from django.db import models
 from django.contrib.postgres.fields import ArrayField
+from django.db import models
 
 
 class DailyOb(models.Model):
@@ -48,14 +48,14 @@ class GeneralSummary(models.Model):
     # precip fields
     precip = models.DecimalField(max_digits=8, decimal_places=3)
     precip_dfn = models.DecimalField(max_digits=8, decimal_places=3)
-    
+
     grtst_precip = models.DecimalField(max_digits=8, decimal_places=3)
     grtst_precip_dates = ArrayField(
         ArrayField(models.DateField())
     )
-    precip_grtrT = models.IntegerField() # trace (T)
-    precip_grtr01 = models.IntegerField() # 01 = 0.01"
-    precip_grtr10 = models.IntegerField() # 10 = 0.10"
+    precip_grtrT = models.IntegerField()  # trace (T)
+    precip_grtr01 = models.IntegerField()  # 01 = 0.01"
+    precip_grtr10 = models.IntegerField()  # 10 = 0.10"
     precip_grtr50 = models.IntegerField()
     precip_grtr100 = models.IntegerField()
 
@@ -68,8 +68,8 @@ class GeneralSummary(models.Model):
         ArrayField(models.DateField())
     )
     sf_grtrT = models.IntegerField()
-    sf_grtr1 = models.IntegerField() # in.
-    sf_grtr3 = models.IntegerField() 
+    sf_grtr1 = models.IntegerField()  # in.
+    sf_grtr3 = models.IntegerField()
     sf_grtr6 = models.IntegerField()
     sf_grtr12 = models.IntegerField()
     sf_grtr18 = models.IntegerField()
@@ -79,7 +79,7 @@ class GeneralSummary(models.Model):
         ArrayField(models.DateField())
     )
     sd_grtrT = models.IntegerField()
-    sd_grtr1 = models.IntegerField() # in.
+    sd_grtr1 = models.IntegerField()  # in.
     sd_grtr3 = models.IntegerField()
     sd_grtr6 = models.IntegerField()
     sd_grtr12 = models.IntegerField()
@@ -88,7 +88,7 @@ class GeneralSummary(models.Model):
 
 class MonthlySummary(GeneralSummary):
     # meta
-    date = models.DateField() # day is always set to 1
+    date = models.DateField()  # day is always set to 1
     remarks = models.TextField()
     csv_filepath = models.CharField(max_length=512)
 

@@ -2,10 +2,9 @@ from django.urls import path
 
 from . import views
 
-
 urlpatterns = [
     # public site
-    
+
     # basic pages
     path('', views.index, name='index'),
     path('home', views.index, name='home'),
@@ -32,5 +31,5 @@ urlpatterns = [
     path('summaries/sunsetlake', views.summaries_sunsetlake_view, name='summaries_sunsetlake_view'),
 
     path('summaries/precip', views.summaries_precip_view, name='summaries_precip_view'),
-    
+
 ]
