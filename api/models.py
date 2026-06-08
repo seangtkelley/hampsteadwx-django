@@ -1,9 +1,12 @@
+"""Django models for weather observations and climate summaries."""
+
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
 
 
 class DailyOb(models.Model):
-    # meta
+    """Daily weather observation from a CSV upload."""
+
     date = models.DateField()
     csv_filepath = models.CharField(max_length=512)
 
@@ -16,11 +19,7 @@ class DailyOb(models.Model):
 
 
 class GeneralSummary(models.Model):
-    # abrv key:
-    # grtr = greater
-    # grtst = greatest
-    # hdd = heating degree days
-    # cdd = cooling degree days
+    """Shared summary fields for monthly and annual climate summaries."""
 
     # temp fields
     max_temp = models.DecimalField(max_digits=8, decimal_places=1)
@@ -47,7 +46,7 @@ class GeneralSummary(models.Model):
 
     grtst_precip = models.DecimalField(max_digits=8, decimal_places=3)
     grtst_precip_dates = ArrayField(ArrayField(models.DateField()))
-    precip_grtrT = models.IntegerField()  # trace (T)
+    precip_grtrT = models.IntegerField()  # noqa: N815 — trace (T); DB column name
     precip_grtr01 = models.IntegerField()  # 01 = 0.01"
     precip_grtr10 = models.IntegerField()  # 10 = 0.10"
     precip_grtr50 = models.IntegerField()
@@ -59,7 +58,7 @@ class GeneralSummary(models.Model):
 
     grtst_sf = models.DecimalField(max_digits=8, decimal_places=3)
     grtst_sf_dates = ArrayField(ArrayField(models.DateField()))
-    sf_grtrT = models.IntegerField()
+    sf_grtrT = models.IntegerField()  # noqa: N815 — trace (T); DB column name
     sf_grtr1 = models.IntegerField()  # in.
     sf_grtr3 = models.IntegerField()
     sf_grtr6 = models.IntegerField()
@@ -68,7 +67,7 @@ class GeneralSummary(models.Model):
 
     grtst_sd = models.DecimalField(max_digits=8, decimal_places=3)
     grtst_sd_dates = ArrayField(ArrayField(models.DateField()))
-    sd_grtrT = models.IntegerField()
+    sd_grtrT = models.IntegerField()  # noqa: N815 — trace (T); DB column name
     sd_grtr1 = models.IntegerField()  # in.
     sd_grtr3 = models.IntegerField()
     sd_grtr6 = models.IntegerField()
@@ -77,12 +76,12 @@ class GeneralSummary(models.Model):
 
 
 class MonthlySummary(GeneralSummary):
-    # meta
+    """Monthly climate summary with remarks and year-to-date fields."""
+
     date = models.DateField()  # day is always set to 1
     remarks = models.TextField()
     csv_filepath = models.CharField(max_length=512)
 
-    # todate fields
     precip_todate = models.DecimalField(max_digits=8, decimal_places=3)
     precip_todate_dfn = models.DecimalField(max_digits=8, decimal_places=3)
 
@@ -91,11 +90,14 @@ class MonthlySummary(GeneralSummary):
 
 
 class AnnualSummary(GeneralSummary):
-    # meta
+    """Annual climate summary aggregated from daily observations."""
+
     year = models.IntegerField()
 
 
 class SunsetLakeIceInIceOut(models.Model):
+    """Sunset Lake ice-in and ice-out dates for a winter season."""
+
     season = models.CharField(max_length=16)
     icein_date = models.DateField()
     iceout_date = models.DateField()
@@ -103,6 +105,8 @@ class SunsetLakeIceInIceOut(models.Model):
 
 
 class SnowSeason(models.Model):
+    """Monthly snowfall totals for an October-May snow season."""
+
     season = models.CharField(max_length=16)
     oct = models.DecimalField(max_digits=8, decimal_places=3)
     nov = models.DecimalField(max_digits=8, decimal_places=3)
@@ -116,4 +120,6 @@ class SnowSeason(models.Model):
 
 
 class PeakFoliage(models.Model):
+    """Recorded peak foliage date."""
+
     date = models.DateField()

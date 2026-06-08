@@ -1,7 +1,8 @@
-import os
-import pathlib
+"""Utilities for loading normals, processing CSVs, and calculating summaries."""
+
 from datetime import date
 from decimal import Decimal
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -12,19 +13,31 @@ from boilerplate.settings import BASE_DIR, TRACE_VAL
 from . import models
 
 
-def get_month_name(num):
+def get_month_name(num: int) -> str:
+    """Return the full month name for a month number."""
     return date(1900, num, 1).strftime("%B")
 
 
-def get_month_abbr(num):
+def get_month_abbr(num: int) -> str:
+    """Return the lowercase three-letter month abbreviation."""
     return date(1900, num, 1).strftime("%b").lower()
 
 
-def create_alert(color, body):
+def create_alert(color: str, body: str) -> dict[str, str]:
+    """Build a Bootstrap-style alert payload.
+
+    Returns:
+        Alert dictionary with color and body keys.
+    """
     return {"color": color, "body": body}
 
 
-def add_alert(payload, color, body):
+def add_alert(payload: dict[str, object], color: str, body: str) -> dict[str, object]:
+    """Append an alert to a view payload.
+
+    Returns:
+        Updated payload containing the new alert.
+    """
     alert = create_alert(color, body)
     if "alerts" in payload:
         payload["alerts"].append(alert)
@@ -34,7 +47,12 @@ def add_alert(payload, color, body):
     return payload
 
 
-def empty_snowseason(season):
+def empty_snowseason(season: str) -> dict[str, object]:
+    """Return zeroed snowfall totals for a new snow season.
+
+    Returns:
+        Snow season defaults keyed by month abbreviation.
+    """
     return {
         "season": season,
         "oct": 0,
@@ -49,16 +67,24 @@ def empty_snowseason(season):
     }
 
 
-def get_normals(year):  # , month):
-    normals = {}
-    if year >= 2022:  # or (year == 2020 and month > 6):
-        filepath = os.path.join(
-            BASE_DIR,
-            "static",
-            "csv",
-            "normals-monthly-1991-2020-2022-01-23T16-24-36.csv",
+def get_normals(year: int) -> dict[str, list[Decimal | float]]:
+    """Load monthly and annual climate normals for the given year.
+
+    Returns:
+        Climate normals keyed by measurement type.
+    """
+    normals: dict[str, list[Decimal | float]] = {}
+    if year >= 2022:
+        filepath = (
+            BASE_DIR
+            / "static"
+            / "csv"
+            / "normals-monthly-1991-2020-2022-01-23T16-24-36.csv"
         )
-        decimal_converter = lambda x: Decimal(x)
+
+        def decimal_converter(x: str) -> Decimal:
+            return Decimal(x)
+
         df = pd.read_csv(
             filepath,
             converters={
@@ -71,15 +97,12 @@ def get_normals(year):  # , month):
         normals["precip"] = list(df["MLY-PRCP-NORMAL"])
         normals["sf"] = list(df["MLY-SNOW-NORMAL"])
 
-        # calc annual norms
         normals["temp"].append(round(np.mean(normals["temp"]), 1))
         normals["precip"].append(round(np.mean(normals["precip"]), 2))
         normals["sf"].append(round(np.mean(normals["sf"]), 1))
     else:
-        filepath = os.path.join(
-            BASE_DIR, "static", "csv", "HMPN3-Monthly-Climate-Normals.csv"
-        )
-        with pathlib.Path(filepath).open() as f:
+        filepath = BASE_DIR / "static" / "csv" / "HMPN3-Monthly-Climate-Normals.csv"
+        with Path(filepath).open() as f:
             lines = f.readlines()
             normals["temp"] = list(map(Decimal, lines[0].split(",")))
             normals["precip"] = list(map(Decimal, lines[1].split(",")))
@@ -88,21 +111,22 @@ def get_normals(year):  # , month):
     return normals
 
 
-def process_csv(filepath):
-    # load file
+def process_csv(filepath: str | Path) -> tuple[int, int]:
+    """Parse a daily observation CSV and upsert daily observation records.
+
+    Returns:
+        Year and month parsed from the uploaded CSV.
+    """
     df = pd.read_csv(filepath, parse_dates=["DATE"])
 
-    # save daily obs
     for _, row in df.iterrows():
-        # check if ob exists
         if models.DailyOb.objects.filter(date=row["DATE"].date()).exists():
             ob = models.DailyOb.objects.filter(date=row["DATE"].date()).first()
-            ob.csv_filepath = filepath
+            ob.csv_filepath = str(filepath)
             ob.max_temp = Decimal(row["TX"])
             ob.min_temp = Decimal(row["TN"])
             ob.atob_temp = Decimal(row["TA"])
 
-            # 0.001 for trace values
             ob.precip = Decimal(TRACE_VAL) if row["PP"] == "T" else Decimal(row["PP"])
             ob.snowfall = Decimal(TRACE_VAL) if row["SF"] == "T" else Decimal(row["SF"])
             ob.snowdepth = (
@@ -113,11 +137,10 @@ def process_csv(filepath):
         else:
             ob = models.DailyOb(
                 date=row["DATE"].date(),
-                csv_filepath=filepath,
+                csv_filepath=str(filepath),
                 max_temp=Decimal(row["TX"]),
                 min_temp=Decimal(row["TN"]),
                 atob_temp=Decimal(row["TA"]),
-                # 0.001 for trace values
                 precip=Decimal(TRACE_VAL) if row["PP"] == "T" else Decimal(row["PP"]),
                 snowfall=Decimal(TRACE_VAL) if row["SF"] == "T" else Decimal(row["SF"]),
                 snowdepth=Decimal(TRACE_VAL)
@@ -130,45 +153,43 @@ def process_csv(filepath):
     return df.iloc[0]["DATE"].year, df.iloc[0]["DATE"].month
 
 
-def calc_monthly_summary(year, month, save_to_db=False):
-    # get all daily obs from month
+def calc_monthly_summary(year: int, month: int, save_to_db: bool = False) -> object:
+    """Calculate a monthly summary from stored daily observations.
+
+    Returns:
+        Summary dictionary, database write result, or None when no data exists.
+    """
     obs = models.DailyOb.objects.filter(date__year=year, date__month=month).order_by(
         "date"
     )
     if obs.count() == 0:
         return None
 
-    # convert to dataframe
     df = pd.DataFrame.from_records(obs.values())
     df[["max_temp", "min_temp", "atob_temp", "precip", "snowfall", "snowdepth"]] = df[
         ["max_temp", "min_temp", "atob_temp", "precip", "snowfall", "snowdepth"]
     ].apply(pd.to_numeric)
 
-    # calc general
     summary = calc_general_summary(df)
 
-    # add meta
     summary["date"] = df.iloc[0].date
     summary["csv_filepath"] = df.iloc[0].csv_filepath
 
-    # add month specific fields
     normals = get_normals(year)
     summary["avg_temp_dfn"] = summary["avg_temp"] - normals["temp"][month - 1]
     summary["precip_dfn"] = summary["precip"] - normals["precip"][month - 1]
     summary["sf_dfn"] = summary["sf"] - normals["sf"][month - 1]
 
-    # precip to date
     precip_todate = (
         models.DailyOb.objects.filter(
             date__year=year, date__month__in=list(range(1, month + 1))
         )
         .exclude(precip=TRACE_VAL)
         .aggregate(Sum("precip"))["precip__sum"]
-    )  # sum over all precip except traces
+    )
     summary["precip_todate"] = precip_todate
     summary["precip_todate_dfn"] = precip_todate - sum(normals["precip"][:month])
 
-    # snowfall to date
     if month >= 10:
         summary["sf_todate"] = (
             models.DailyOb.objects.filter(
@@ -176,12 +197,11 @@ def calc_monthly_summary(year, month, save_to_db=False):
             )
             .exclude(snowfall=TRACE_VAL)
             .aggregate(Sum("snowfall"))["snowfall__sum"]
-        )  # same as above
+        )
 
         summary["sf_todate_dfn"] = summary["sf_todate"] - sum(normals["sf"][9:month])
 
     elif month <= 5:
-        # get last year's snow
         prev_year_sf = (
             models.DailyOb.objects.filter(
                 date__year=year - 1, date__month__in=[10, 11, 12]
@@ -189,11 +209,8 @@ def calc_monthly_summary(year, month, save_to_db=False):
             .exclude(snowfall=TRACE_VAL)
             .aggregate(Sum("snowfall"))["snowfall__sum"]
         )
-        summary["sf_todate"] = (
-            0 if not prev_year_sf else prev_year_sf
-        )  # small check if we don't have prev year snowfall
+        summary["sf_todate"] = prev_year_sf if prev_year_sf else 0
 
-        # get this year's snow
         summary["sf_todate"] += (
             models.DailyOb.objects.filter(
                 date__year=year, date__month__in=list(range(1, month + 1))
@@ -217,7 +234,6 @@ def calc_monthly_summary(year, month, save_to_db=False):
         else:
             db_summary = models.MonthlySummary.objects.create(**summary)
 
-        # save snow season information
         if month in [10, 11, 12, 1, 2, 3, 4, 5]:
             if month in [10, 11, 12]:
                 season_str = f"{year}-{year + 1}"
@@ -239,22 +255,22 @@ def calc_monthly_summary(year, month, save_to_db=False):
     return summary
 
 
-def calc_annual_summary(year, save_to_db=False):
-    # get all daily obs from year
+def calc_annual_summary(year: int, save_to_db: bool = False) -> object:
+    """Calculate an annual summary from stored daily observations.
+
+    Returns:
+        Summary dictionary, database write result, or None when no data exists.
+    """
     obs = models.DailyOb.objects.filter(date__year=year).order_by("date")
     if obs.count() == 0:
         return None
 
-    # convert to dataframe
     df = pd.DataFrame.from_records(obs.values())
 
-    # calc general
     summary = calc_general_summary(df)
 
-    # add meta
     summary["year"] = year
 
-    # add annual specific fields
     normals = get_normals(year)
     summary["avg_temp_dfn"] = summary["avg_temp"] - normals["temp"][12]
     summary["precip_dfn"] = summary["precip"] - normals["precip"][12]
@@ -272,14 +288,13 @@ def calc_annual_summary(year, save_to_db=False):
     return summary
 
 
-def calc_general_summary(df):
+def calc_general_summary(df: pd.DataFrame) -> dict[str, object]:
+    """Calculate shared summary statistics from a daily observation dataframe.
+
+    Returns:
+        Shared summary fields derived from the observation dataframe.
+    """
     return {
-        # abrv key:
-        # grtr = greater
-        # grtst = greatest
-        # hdd = heating degree days
-        # cdd = cooling degree days
-        # temp fields
         "max_temp": Decimal(df.max_temp.max()),
         "max_temp_dates": list(df[df.max_temp == df.max_temp.max()].date),
         "max_temp_avg": Decimal(df.max_temp.mean()),
@@ -309,7 +324,6 @@ def calc_general_summary(df):
                 - 65
             )
         ),
-        # precip fields
         "precip": TRACE_VAL
         if Decimal(df.precip.max()) == TRACE_VAL
         else Decimal(sum(df[df.precip != TRACE_VAL].precip)),
@@ -317,12 +331,11 @@ def calc_general_summary(df):
         "grtst_precip_dates": []
         if df.precip.max() == 0
         else list(df[df.precip == df.precip.max()].date),
-        "precip_grtrT": len(df[df.precip >= TRACE_VAL]),  # trace (T)
-        "precip_grtr01": len(df[df.precip >= 0.01000]),  # 01 = 0.01"
-        "precip_grtr10": len(df[df.precip >= 0.10000]),  # 10 = 0.10"
+        "precip_grtrT": len(df[df.precip >= TRACE_VAL]),
+        "precip_grtr01": len(df[df.precip >= 0.01000]),
+        "precip_grtr10": len(df[df.precip >= 0.10000]),
         "precip_grtr50": len(df[df.precip >= 0.50000]),
         "precip_grtr100": len(df[df.precip >= 1]),
-        # snowfall and snowdepth fields
         "sf": TRACE_VAL
         if Decimal(df.snowfall.max()) == TRACE_VAL
         else Decimal(sum(df[df.snowfall != TRACE_VAL].snowfall)),
@@ -331,7 +344,7 @@ def calc_general_summary(df):
         if df.snowfall.max() == 0
         else list(df[df.snowfall == df.snowfall.max()].date),
         "sf_grtrT": len(df[df.snowfall >= TRACE_VAL]),
-        "sf_grtr1": len(df[df.snowfall >= 1]),  # in.
+        "sf_grtr1": len(df[df.snowfall >= 1]),
         "sf_grtr3": len(df[df.snowfall >= 3]),
         "sf_grtr6": len(df[df.snowfall >= 6]),
         "sf_grtr12": len(df[df.snowfall >= 12]),
@@ -341,7 +354,7 @@ def calc_general_summary(df):
         if df.snowdepth.max() == 0
         else list(df[df.snowdepth == df.snowdepth.max()].date),
         "sd_grtrT": len(df[df.snowdepth >= TRACE_VAL]),
-        "sd_grtr1": len(df[df.snowdepth >= 1]),  # in.
+        "sd_grtr1": len(df[df.snowdepth >= 1]),
         "sd_grtr3": len(df[df.snowdepth >= 3]),
         "sd_grtr6": len(df[df.snowdepth >= 6]),
         "sd_grtr12": len(df[df.snowdepth >= 12]),

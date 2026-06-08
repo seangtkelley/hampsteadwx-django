@@ -5,7 +5,12 @@ import os
 import sys
 
 
-def main():
+def main() -> None:
+    """Run administrative tasks.
+
+    Raises:
+        ImportError: If Django is not installed or configured.
+    """
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "boilerplate.settings")
     try:
         from django.core.management import execute_from_command_line

@@ -1,3 +1,7 @@
+"""Management command to bulk-recalculate monthly and annual summaries."""
+
+from argparse import ArgumentParser
+
 from django.core.management.base import BaseCommand, CommandError
 from tqdm import tqdm
 
@@ -6,9 +10,12 @@ from api.models import AnnualSummary, MonthlySummary
 
 
 class Command(BaseCommand):
+    """Recalculate stored summaries after calculation logic changes."""
+
     help = "Recalculate summaries. Helpful if changes/additions are made to calculation code."
 
-    def add_arguments(self, parser):
+    def add_arguments(self, parser: ArgumentParser) -> None:
+        """Register command-line arguments."""
         parser.add_argument(
             "-m", "--months", type=int, nargs="*", help="Months to recalculate."
         )
@@ -24,50 +31,57 @@ class Command(BaseCommand):
             "--all", action="store_true", help="Recalculate all summaries"
         )
 
-    def handle(self, *args, **options):
+    def handle(self, *_args: object, **options: object) -> None:
+        """Run recalculation for the selected summaries.
+
+        Raises:
+            CommandError: If no valid year or month selection is provided.
+        """
         monthly_summaries, annual_summaries = [], []
 
         if options["all"]:
             if options["months"] is not None and options["years"] is None:
-                print("Recalculating all monthly summaries...")
+                self.stdout.write("Recalculating all monthly summaries...")
                 monthly_summaries = MonthlySummary.objects.all()
             elif options["years"] is not None and options["months"] is None:
-                print("Recalculating all annual summaries...")
+                self.stdout.write("Recalculating all annual summaries...")
                 annual_summaries = AnnualSummary.objects.all()
             else:
-                print("Recalculating all summaries...")
+                self.stdout.write("Recalculating all summaries...")
                 monthly_summaries = MonthlySummary.objects.all()
                 annual_summaries = AnnualSummary.objects.all()
 
         elif options["months"] is not None and len(options["months"]) > 0:
             if options["years"] is not None and len(options["years"]) > 0:
-                print(
-                    f"Recalculating monthly summaries for months: {options['months']} and years: {options['years']}..."
+                self.stdout.write(
+                    "Recalculating monthly summaries for months: "
+                    f"{options['months']} and years: {options['years']}..."
                 )
                 monthly_summaries = MonthlySummary.objects.filter(
                     date__year__in=options["years"], date__month__in=options["months"]
                 )
             else:
-                print(
-                    f"Recalculating monthly summaries for months: {options['months']} and years: all..."
+                self.stdout.write(
+                    "Recalculating monthly summaries for months: "
+                    f"{options['months']} and years: all..."
                 )
                 monthly_summaries = MonthlySummary.objects.filter(
                     date__month__in=options["months"]
                 )
 
         elif options["years"] is not None and len(options["years"]) > 0:
-            print(f"Recalculating annual summaries for years: {options['years']}...")
+            self.stdout.write(
+                f"Recalculating annual summaries for years: {options['years']}..."
+            )
             annual_summaries = AnnualSummary.objects.filter(year__in=options["years"])
 
         else:
             raise CommandError("Missing or malformed arguments.")
 
-        # loop thru and recalc each
         for summary in tqdm(monthly_summaries):
             utils.calc_monthly_summary(
                 summary.date.year, summary.date.month, save_to_db=True
             )
 
-        # loop thru and recalc each
         for summary in tqdm(annual_summaries):
             utils.calc_annual_summary(summary.year, save_to_db=True)
