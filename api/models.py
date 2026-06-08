@@ -24,17 +24,13 @@ class GeneralSummary(models.Model):
 
     # temp fields
     max_temp = models.DecimalField(max_digits=8, decimal_places=1)
-    max_temp_dates = ArrayField(
-        ArrayField(models.DateField())
-    )
+    max_temp_dates = ArrayField(ArrayField(models.DateField()))
     max_temp_avg = models.DecimalField(max_digits=8, decimal_places=1)
     max_temp_grtr90_count = models.IntegerField()
     max_temp_less32_count = models.IntegerField()
 
     min_temp = models.DecimalField(max_digits=8, decimal_places=1)
-    min_temp_dates = ArrayField(
-        ArrayField(models.DateField())
-    )
+    min_temp_dates = ArrayField(ArrayField(models.DateField()))
     min_temp_avg = models.DecimalField(max_digits=8, decimal_places=1)
     min_temp_less32_count = models.IntegerField()
     min_temp_less0_count = models.IntegerField()
@@ -50,9 +46,7 @@ class GeneralSummary(models.Model):
     precip_dfn = models.DecimalField(max_digits=8, decimal_places=3)
 
     grtst_precip = models.DecimalField(max_digits=8, decimal_places=3)
-    grtst_precip_dates = ArrayField(
-        ArrayField(models.DateField())
-    )
+    grtst_precip_dates = ArrayField(ArrayField(models.DateField()))
     precip_grtrT = models.IntegerField()  # trace (T)
     precip_grtr01 = models.IntegerField()  # 01 = 0.01"
     precip_grtr10 = models.IntegerField()  # 10 = 0.10"
@@ -64,9 +58,7 @@ class GeneralSummary(models.Model):
     sf_dfn = models.DecimalField(max_digits=8, decimal_places=3)
 
     grtst_sf = models.DecimalField(max_digits=8, decimal_places=3)
-    grtst_sf_dates = ArrayField(
-        ArrayField(models.DateField())
-    )
+    grtst_sf_dates = ArrayField(ArrayField(models.DateField()))
     sf_grtrT = models.IntegerField()
     sf_grtr1 = models.IntegerField()  # in.
     sf_grtr3 = models.IntegerField()
@@ -75,9 +67,7 @@ class GeneralSummary(models.Model):
     sf_grtr18 = models.IntegerField()
 
     grtst_sd = models.DecimalField(max_digits=8, decimal_places=3)
-    grtst_sd_dates = ArrayField(
-        ArrayField(models.DateField())
-    )
+    grtst_sd_dates = ArrayField(ArrayField(models.DateField()))
     sd_grtrT = models.IntegerField()
     sd_grtr1 = models.IntegerField()  # in.
     sd_grtr3 = models.IntegerField()
