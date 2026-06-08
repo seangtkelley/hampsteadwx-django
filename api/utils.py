@@ -1,10 +1,11 @@
 """Utilities for loading normals, processing CSVs, and calculating summaries."""
 
+from collections.abc import Iterable, Mapping
 from datetime import date
-from decimal import Decimal
+from decimal import Decimal, getcontext
 from pathlib import Path
+from typing import Any, cast
 
-import numpy as np
 import pandas as pd
 from django.db.models import Sum
 
@@ -32,19 +33,21 @@ def create_alert(color: str, body: str) -> dict[str, str]:
     return {"color": color, "body": body}
 
 
-def add_alert(payload: dict[str, object], color: str, body: str) -> dict[str, object]:
+def add_alert(
+    payload: Mapping[str, object], color: str, body: str
+) -> dict[str, object]:
     """Append an alert to a view payload.
 
     Returns:
         Updated payload containing the new alert.
     """
     alert = create_alert(color, body)
-    if "alerts" in payload:
-        payload["alerts"].append(alert)
-    else:
-        payload["alerts"] = [alert]
-
-    return payload
+    new_payload: dict[str, object] = dict(payload)
+    alerts_raw: object = new_payload.get("alerts", [])
+    alerts = list(cast(Iterable[Any], alerts_raw))
+    alerts.append(alert)
+    new_payload["alerts"] = alerts
+    return new_payload
 
 
 def empty_snowseason(season: str) -> dict[str, object]:
@@ -67,13 +70,15 @@ def empty_snowseason(season: str) -> dict[str, object]:
     }
 
 
-def get_normals(year: int) -> dict[str, list[Decimal | float]]:
+def get_normals(year: int) -> dict[str, list[Decimal]]:
     """Load monthly and annual climate normals for the given year.
 
     Returns:
         Climate normals keyed by measurement type.
     """
-    normals: dict[str, list[Decimal | float]] = {}
+    normals: dict[str, list[Decimal]] = {}
+    # Ensure Decimal arithmetic precision is reasonable for averages
+    getcontext().prec = 9
     if year >= 2022:
         filepath = (
             BASE_DIR
@@ -97,9 +102,15 @@ def get_normals(year: int) -> dict[str, list[Decimal | float]]:
         normals["precip"] = list(df["MLY-PRCP-NORMAL"])
         normals["sf"] = list(df["MLY-SNOW-NORMAL"])
 
-        normals["temp"].append(round(np.mean(normals["temp"]), 1))
-        normals["precip"].append(round(np.mean(normals["precip"]), 2))
-        normals["sf"].append(round(np.mean(normals["sf"]), 1))
+        # Compute Decimal means to keep types consistent
+        if len(normals["temp"]) > 0:
+            normals["temp"].append(sum(normals["temp"]) / Decimal(len(normals["temp"])))
+        if len(normals["precip"]) > 0:
+            normals["precip"].append(
+                sum(normals["precip"]) / Decimal(len(normals["precip"]))
+            )
+        if len(normals["sf"]) > 0:
+            normals["sf"].append(sum(normals["sf"]) / Decimal(len(normals["sf"])))
     else:
         filepath = BASE_DIR / "static" / "csv" / "HMPN3-Monthly-Climate-Normals.csv"
         with Path(filepath).open() as f:
@@ -121,7 +132,10 @@ def process_csv(filepath: str | Path) -> tuple[int, int]:
 
     for _, row in df.iterrows():
         if models.DailyOb.objects.filter(date=row["DATE"].date()).exists():
-            ob = models.DailyOb.objects.filter(date=row["DATE"].date()).first()
+            ob = cast(
+                models.DailyOb,
+                models.DailyOb.objects.filter(date=row["DATE"].date()).first(),
+            )
             ob.csv_filepath = str(filepath)
             ob.max_temp = Decimal(row["TX"])
             ob.min_temp = Decimal(row["TN"])
@@ -176,9 +190,12 @@ def calc_monthly_summary(year: int, month: int, save_to_db: bool = False) -> obj
     summary["csv_filepath"] = df.iloc[0].csv_filepath
 
     normals = get_normals(year)
-    summary["avg_temp_dfn"] = summary["avg_temp"] - normals["temp"][month - 1]
-    summary["precip_dfn"] = summary["precip"] - normals["precip"][month - 1]
-    summary["sf_dfn"] = summary["sf"] - normals["sf"][month - 1]
+    norm_temp = Decimal(str(normals["temp"][month - 1]))
+    norm_precip = Decimal(str(normals["precip"][month - 1]))
+    norm_sf = Decimal(str(normals["sf"][month - 1]))
+    summary["avg_temp_dfn"] = Decimal(str(summary["avg_temp"])) - norm_temp
+    summary["precip_dfn"] = Decimal(str(summary["precip"])) - norm_precip
+    summary["sf_dfn"] = Decimal(str(summary["sf"])) - norm_sf
 
     precip_todate = (
         models.DailyOb.objects.filter(
@@ -240,12 +257,9 @@ def calc_monthly_summary(year: int, month: int, save_to_db: bool = False) -> obj
             elif month in [1, 2, 3, 4, 5]:
                 season_str = f"{year - 1}-{year}"
 
-            if models.SnowSeason.objects.filter(season=season_str).exists():
-                snowseason = models.SnowSeason.objects.filter(season=season_str).first()
-            else:
-                snowseason = models.SnowSeason.objects.create(
-                    **empty_snowseason(season_str)
-                )
+            snowseason, _ = models.SnowSeason.objects.get_or_create(
+                season=season_str, defaults=empty_snowseason(season_str)
+            )
 
             setattr(snowseason, get_month_abbr(month), summary["sf"])
             snowseason.total = snowseason.total + summary["sf"]
@@ -272,9 +286,12 @@ def calc_annual_summary(year: int, save_to_db: bool = False) -> object:
     summary["year"] = year
 
     normals = get_normals(year)
-    summary["avg_temp_dfn"] = summary["avg_temp"] - normals["temp"][12]
-    summary["precip_dfn"] = summary["precip"] - normals["precip"][12]
-    summary["sf_dfn"] = summary["sf"] - normals["sf"][12]
+    norm_temp = Decimal(str(normals["temp"][12]))
+    norm_precip = Decimal(str(normals["precip"][12]))
+    norm_sf = Decimal(str(normals["sf"][12]))
+    summary["avg_temp_dfn"] = Decimal(str(summary["avg_temp"])) - norm_temp
+    summary["precip_dfn"] = Decimal(str(summary["precip"])) - norm_precip
+    summary["sf_dfn"] = Decimal(str(summary["sf"])) - norm_sf
 
     if save_to_db:
         if models.AnnualSummary.objects.filter(year=year).exists():

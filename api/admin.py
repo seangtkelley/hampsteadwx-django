@@ -58,6 +58,7 @@ class SnowSeasonAdmin(admin.ModelAdmin):
         self,
         request: HttpRequest,
         obj: SnowSeason | None = None,
+        change: bool = False,
         **kwargs: object,
     ) -> type[ModelForm]:
         """Customize the admin form with a season placeholder.
@@ -68,7 +69,7 @@ class SnowSeasonAdmin(admin.ModelAdmin):
         kwargs["widgets"] = {
             "season": forms.TextInput(attrs={"placeholder": "Ex: 2020-2021"})
         }
-        return super().get_form(request, obj, **kwargs)
+        return super().get_form(request, obj, change, **kwargs)
 
 
 @admin.register(SunsetLakeIceInIceOut)
@@ -81,6 +82,7 @@ class SunsetLakeIceInIceOutAdmin(admin.ModelAdmin):
         self,
         request: HttpRequest,
         obj: SunsetLakeIceInIceOut | None = None,
+        change: bool = False,
         **kwargs: object,
     ) -> type[ModelForm]:
         """Customize the admin form with season and duration widgets.
@@ -92,4 +94,4 @@ class SunsetLakeIceInIceOutAdmin(admin.ModelAdmin):
             "season": forms.TextInput(attrs={"placeholder": "Ex: 2020-2021"}),
             "duration": forms.NumberInput(attrs={"title": "days"}),
         }
-        return super().get_form(request, obj, **kwargs)
+        return super().get_form(request, obj, change, **kwargs)

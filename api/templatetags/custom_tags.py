@@ -2,7 +2,9 @@
 
 import math
 import re
+from collections.abc import Iterable, Mapping, Sequence
 from decimal import Decimal
+from typing import Any, cast
 
 from django import template
 
@@ -24,12 +26,22 @@ def getattribute(value: object, arg: object) -> object:
     Returns:
         The resolved attribute value, or None if not found.
     """
-    if hasattr(value, str(arg)):
-        return getattr(value, arg)
-    if hasattr(value, "has_key") and value.has_key(arg):
+    name = str(arg)
+    if hasattr(value, name):
+        return getattr(value, name)
+    if isinstance(value, Mapping) and arg in value:
+        value = cast(Mapping[Any, Any], value)
         return value[arg]
-    if numeric_test.match(str(arg)) and len(value) > int(arg):
-        return value[int(arg)]
+    # Sequence but not text
+    if (
+        isinstance(value, Sequence)
+        and not isinstance(value, (str, bytes))
+        and numeric_test.match(name)
+    ):
+        idx = int(name)
+        seq = cast(Sequence[Any], value)
+        if -len(seq) <= idx < len(seq):
+            return seq[idx]
     return None
 
 
@@ -44,14 +56,14 @@ def hasattribute(value: object, arg: object) -> bool:
 
 
 @register.filter
-def iloc(items: object, index: object) -> object:
+def iloc(items: Iterable[Any] | Sequence[Any], index: object) -> object:
     """Return the item at the given index, or None on failure.
 
     Returns:
         The indexed item, or None when lookup fails.
     """
     try:
-        return items[int(index)]  # type: ignore[index]
+        return cast(Sequence[Any], items)[int(str(index))]
     except (IndexError, TypeError, ValueError):
         return None
 
@@ -63,7 +75,7 @@ def zip_lists(value: object, arg: object) -> zip[tuple[object, object]]:
     Returns:
         Zip object pairing items from both iterables.
     """
-    return zip(value, arg, strict=False)  # type: ignore[arg-type]
+    return zip(cast(Iterable[Any], value), cast(Iterable[Any], arg), strict=False)
 
 
 @register.filter(name="range_inclu")
@@ -73,7 +85,7 @@ def make_range(value: object, arg: object) -> range:
     Returns:
         Range spanning the requested values.
     """
-    return range(int(value), int(arg) + 1)  # type: ignore[arg-type]
+    return range(int(str(value)), int(str(arg)) + 1)
 
 
 @register.filter
@@ -83,7 +95,7 @@ def add(value: object, arg: object) -> Decimal:
     Returns:
         Sum of the operands as a Decimal.
     """
-    return Decimal(value) + Decimal(arg)  # type: ignore[arg-type]
+    return Decimal(str(value)) + Decimal(str(arg))
 
 
 @register.filter
@@ -93,7 +105,7 @@ def sub(value: object, arg: object) -> Decimal:
     Returns:
         Difference of the operands as a Decimal.
     """
-    return Decimal(value) - Decimal(arg)  # type: ignore[arg-type]
+    return Decimal(str(value)) - Decimal(str(arg))
 
 
 @register.filter
@@ -103,7 +115,7 @@ def multiply(value: object, arg: object) -> Decimal:
     Returns:
         Product of the operands as a Decimal.
     """
-    return Decimal(value) * Decimal(arg)  # type: ignore[arg-type]
+    return Decimal(str(value)) * Decimal(str(arg))
 
 
 @register.filter
@@ -113,7 +125,7 @@ def divide(value: object, arg: object) -> Decimal:
     Returns:
         Quotient of the operands as a Decimal.
     """
-    return Decimal(value) / Decimal(arg)  # type: ignore[arg-type]
+    return Decimal(str(value)) / Decimal(str(arg))
 
 
 @register.filter
@@ -123,7 +135,7 @@ def ceil(value: object) -> int:
     Returns:
         Smallest integer greater than or equal to the value.
     """
-    return math.ceil(Decimal(value))  # type: ignore[arg-type]
+    return math.ceil(Decimal(str(value)))
 
 
 @register.filter
@@ -133,7 +145,7 @@ def floor(value: object) -> int:
     Returns:
         Largest integer less than or equal to the value.
     """
-    return math.floor(Decimal(value))  # type: ignore[arg-type]
+    return math.floor(Decimal(str(value)))
 
 
 @register.filter
@@ -144,17 +156,17 @@ def format_trace(value: object, arg: str) -> object:
         Formatted display value, trace label, or empty string.
     """
     try:
-        if Decimal(value) == TRACE_VAL:  # type: ignore[arg-type]
+        if Decimal(str(value)) == TRACE_VAL:
             if arg == "dec":
                 return 0.01
             if "str" in arg:
                 return "Trace"
             return ""
         if "precip" in arg:
-            return f"{Decimal(value):.2f}"  # type: ignore[arg-type]
+            return f"{Decimal(str(value)):.2f}"
         if "snow" in arg:
-            return f"{Decimal(value):.1f}"  # type: ignore[arg-type]
-        return Decimal(value)  # type: ignore[arg-type]
+            return f"{Decimal(str(value)):.1f}"
+        return Decimal(str(value))
 
     except Exception as e:
         return str(e)
@@ -168,7 +180,7 @@ def format_dfn(value: object) -> str:
         String representation with a leading plus for positive values.
     """
     try:
-        if float(value) > 0:  # type: ignore[arg-type]
+        if float(str(value)) > 0:
             return "+" + str(value)
         return str(value)
     except Exception as e:
@@ -183,4 +195,4 @@ def map_snowseason_year(year: object, season: str) -> int:
         Chart axis year for the requested season component.
     """
     map_dict = {int(season.split("-")[0]): 1901, int(season.split("-")[1]): 1902}
-    return map_dict[int(year)]  # type: ignore[arg-type]
+    return map_dict[int(str(year))]

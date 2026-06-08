@@ -1,6 +1,8 @@
 """Management command to bulk-recalculate monthly and annual summaries."""
 
 from argparse import ArgumentParser
+from collections.abc import Sequence
+from typing import cast
 
 from django.core.management.base import BaseCommand, CommandError
 from tqdm import tqdm
@@ -31,7 +33,7 @@ class Command(BaseCommand):
             "--all", action="store_true", help="Recalculate all summaries"
         )
 
-    def handle(self, *_args: object, **options: object) -> None:
+    def handle(self, *_args: object, **options: dict[str, object]) -> None:
         """Run recalculation for the selected summaries.
 
         Raises:
@@ -51,14 +53,21 @@ class Command(BaseCommand):
                 monthly_summaries = MonthlySummary.objects.all()
                 annual_summaries = AnnualSummary.objects.all()
 
-        elif options["months"] is not None and len(options["months"]) > 0:
-            if options["years"] is not None and len(options["years"]) > 0:
+        elif (
+            options["months"] is not None
+            and len(cast(Sequence[int], options["months"])) > 0
+        ):
+            if (
+                options["years"] is not None
+                and len(cast(Sequence[int], options["years"])) > 0
+            ):
                 self.stdout.write(
                     "Recalculating monthly summaries for months: "
                     f"{options['months']} and years: {options['years']}..."
                 )
                 monthly_summaries = MonthlySummary.objects.filter(
-                    date__year__in=options["years"], date__month__in=options["months"]
+                    date__year__in=cast(Sequence[int], options["years"]),
+                    date__month__in=cast(Sequence[int], options["months"]),
                 )
             else:
                 self.stdout.write(
@@ -66,14 +75,19 @@ class Command(BaseCommand):
                     f"{options['months']} and years: all..."
                 )
                 monthly_summaries = MonthlySummary.objects.filter(
-                    date__month__in=options["months"]
+                    date__month__in=cast(Sequence[int], options["months"])
                 )
 
-        elif options["years"] is not None and len(options["years"]) > 0:
+        elif (
+            options["years"] is not None
+            and len(cast(Sequence[int], options["years"])) > 0
+        ):
             self.stdout.write(
                 f"Recalculating annual summaries for years: {options['years']}..."
             )
-            annual_summaries = AnnualSummary.objects.filter(year__in=options["years"])
+            annual_summaries = AnnualSummary.objects.filter(
+                year__in=cast(Sequence[int], options["years"])
+            )
 
         else:
             raise CommandError("Missing or malformed arguments.")
