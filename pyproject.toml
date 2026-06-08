@@ -1,0 +1,98 @@
+[project]
+name = "hampsteadwx-django"
+version = "2.0.0"
+description = "Cooperative climatological data explorer for Hampstead, NH weather summaries."
+readme = "README.md"
+requires-python = ">=3.10.9,<3.11"
+dependencies = [
+    "asgiref~=3.5.0",
+    "dj-database-url~=0.5.0",
+    "Django~=4.0.3",
+    "gunicorn~=20.1.0",
+    "numpy~=1.22.2",
+    "pandas~=1.4.1",
+    "psycopg2~=2.9.3",
+    "tqdm~=4.64.0",
+    "whitenoise~=6.0.0",
+]
+
+[dependency-groups]
+dev = [
+    "django-stubs[compatible-mypy]>=4.2",
+    "ruff>=0.11",
+    "ty>=0.0.1a19",
+]
+
+[tool.uv]
+default-groups = ["dev"]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 88
+exclude = [
+    ".venv",
+    "api/migrations",
+]
+
+[tool.ruff.lint]
+preview = true
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes
+    "I",    # isort
+    "C4",   # flake8-comprehensions
+    "B",    # flake8-bugbear
+    "UP",   # pyupgrade
+    "RUF",  # ruff-specific rules
+    "SIM",  # flake8-simplify
+    "N",    # pep8-naming
+    "D",    # pydocstyle
+    "DOC",  # pydoclint
+    "NPY",  # numpy specific
+    "PD",   # pandas specific
+    "PERF", # performance related rules
+    "RET",  # flake8-return
+    "PIE",  # flake8-pie
+    "T20",  # flake8-print
+    "LOG",  # flake8-logging
+    "G",    # flake8-logging-format
+    "PT",   # flake8-pytest-style
+    "ARG",  # flake8-unused-arguments
+    "PTH",  # flake8-use-pathlib
+    "ANN",  # flake8-annotations
+]
+ignore = [
+    "E501", # line too long
+    "C901", # cyclomatic complexity
+    "B006", # data structures for default arguments
+    "D203", # pydocstyle: incompatible with D211
+    "D212", # pydocstyle: incompatible with D213
+    "D104", # pydocstyle: missing docstring in public package
+    "D107", # pydocstyle: missing docstring in __init__
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.isort]
+known-first-party = ["api", "boilerplate"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["D", "DOC"]
+"**/tests.py" = ["D", "DOC"]
+"**/migrations/*.py" = ["D", "ANN"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+docstring-code-format = true
+
+[tool.ty.environment]
+python-version = "3.10"
+
+[tool.ty.src]
+include = ["api", "boilerplate", "manage.py"]
+exclude = ["**/migrations/**"]

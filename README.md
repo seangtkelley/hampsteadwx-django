@@ -30,7 +30,7 @@ Production: [hampsteadwx-django.herokuapp.com](http://hampsteadwx-django.herokua
 | PostgreSQL 14+ | **Required** — see [Database](#database-postgresql-required) |
 | [Heroku CLI](https://devcenter.heroku.com/articles/heroku-cli) | Optional; needed to pull production data |
 
-Python version is pinned in `runtime.txt` (currently **3.10.9**). Match that locally to stay aligned with Heroku.
+Python **3.10.9** is pinned in `.python-version` and `runtime.txt`. Match that locally to stay aligned with Heroku.
 
 ### Database: PostgreSQL required
 
@@ -42,13 +42,19 @@ Summary models use PostgreSQL-only [`ArrayField`](https://docs.djangoproject.com
 git clone git@github.com:seangtkelley/hampsteadwx-django.git
 cd hampsteadwx-django
 
-uv venv --python 3.10.9
+uv sync
 source .venv/bin/activate   # Windows: .venv\Scripts\activate
-
-uv pip install -r requirements.txt
 ```
 
-Use `uv pip install -r requirements.txt` (or `uv pip sync` if you add a lockfile later) so dependencies stay in `requirements.txt` as the source of truth.
+Dependencies are declared in `pyproject.toml`. `uv sync` installs runtime and dev dependencies (including [Ruff](https://docs.astral.sh/ruff/) and [ty](https://docs.astral.sh/ty/)) from the lockfile.
+
+If `uv sync` fails building `psycopg2`, install PostgreSQL client libraries locally (e.g. `brew install libpq` and ensure `pg_config` is on your `PATH`).
+
+For Heroku deployment, regenerate the production lockfile export when dependencies change:
+
+```bash
+uv export --no-dev --no-hashes -o requirements.txt
+```
 
 ### 2. Local PostgreSQL
 
@@ -122,6 +128,18 @@ Production uses WhiteNoise with compressed manifest storage. For local dev, Djan
 ```bash
 python manage.py collectstatic --noinput
 ```
+
+### Code quality
+
+Lint, format, and type-check with Ruff and ty:
+
+```bash
+uv run ruff check .
+uv run ruff format .
+uv run ty check
+```
+
+Configuration lives in `pyproject.toml` under `[tool.ruff]` and `[tool.ty]`.
 
 ### Management commands
 
@@ -210,7 +228,8 @@ This repo is set up for Heroku buildpack deployment:
 
 - `Procfile` — Gunicorn WSGI server
 - `runtime.txt` — Python version
-- `requirements.txt` — dependencies (install via buildpack; locally use `uv pip install -r requirements.txt`)
+- `pyproject.toml` — project metadata and dependencies (source of truth)
+- `requirements.txt` — production export for Heroku (`uv export --no-dev --no-hashes -o requirements.txt`)
 
 Typical config vars on the app:
 
@@ -229,6 +248,7 @@ heroku logs --tail -a hampsteadwx-django
 
 | Path | Purpose |
 |------|---------|
+| `pyproject.toml` | Dependencies, Ruff, and ty configuration |
 | `boilerplate/settings.py` | Django settings; DB via `DATABASE_URL` |
 | `boilerplate/settings_secret.py.template` | Copy to `settings_secret.py` for local `DEBUG` / hosts |
 | `boilerplate/settings_secret.py` | Local overrides (gitignored) |
