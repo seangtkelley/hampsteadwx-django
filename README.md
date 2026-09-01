@@ -50,12 +50,6 @@ Dependencies are declared in `pyproject.toml`. `uv sync` installs runtime and **
 
 If `uv sync` fails building `psycopg2`, install PostgreSQL client libraries locally (e.g. `brew install libpq` and ensure `pg_config` is on your `PATH`).
 
-For Heroku deployment, regenerate the production lockfile export when dependencies change:
-
-```bash
-uv export --no-dev --no-hashes -o requirements.txt
-```
-
 ### 2. Local PostgreSQL
 
 Create a database and user (adjust names as you like):
@@ -270,7 +264,7 @@ This repo is set up for Heroku buildpack deployment:
 - `Procfile` — release phase (migrations) and Gunicorn WSGI server
 - `runtime.txt` — Python version
 - `pyproject.toml` — project metadata, version, and dependencies (source of truth)
-- `requirements.txt` — production export for Heroku (`uv export --no-dev --no-hashes -o requirements.txt`)
+- `uv.lock` — locked dependencies for Heroku (installs production deps only)
 
 Typical config vars on the app:
 
@@ -290,7 +284,7 @@ Heroku auto-deploys from the `production` branch when CI checks on that commit a
 **To cut a release:**
 
 1. Bump `version` in `pyproject.toml`
-2. Regenerate `requirements.txt` if dependencies changed (`uv export --no-dev --no-hashes -o requirements.txt`)
+2. Run `uv lock` if dependencies changed
 3. Merge to `main` and wait for CI to pass
 
 Merges to `main` that do not bump the version do not deploy.
