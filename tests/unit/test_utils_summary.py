@@ -153,6 +153,22 @@ def test_calc_monthly_summary_no_data(monkeypatch: pytest.MonkeyPatch) -> None:
     assert calc_monthly_summary(1999, 1) is None
 
 
+def test_calc_monthly_summary_orders_by_date(monkeypatch: pytest.MonkeyPatch) -> None:
+    """FakeQuerySet.order_by must sort so summary date is the earliest day."""
+    monkeypatch.setattr("api.utils.get_normals", lambda _year: MOCK_NORMALS)
+    patch_daily_ob_objects(
+        monkeypatch,
+        [
+            fake_daily_row(date(2020, 1, 3), precip="0.1"),
+            fake_daily_row(date(2020, 1, 1), precip="0.1"),
+            fake_daily_row(date(2020, 1, 2), precip="0.1"),
+        ],
+    )
+    summary = calc_monthly_summary(2020, 1, save_to_db=False)
+    assert isinstance(summary, dict)
+    assert summary["date"] == date(2020, 1, 1)
+
+
 def test_calc_annual_summary_no_data(monkeypatch: pytest.MonkeyPatch) -> None:
     patch_daily_ob_objects(monkeypatch, [])
     assert calc_annual_summary(1999) is None

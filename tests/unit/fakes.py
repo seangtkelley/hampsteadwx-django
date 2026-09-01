@@ -21,8 +21,18 @@ class FakeQuerySet:
     def exclude(self, **kwargs: object) -> FakeQuerySet:
         return FakeQuerySet([r for r in self.rows if not _row_matches(r, kwargs)])
 
-    def order_by(self, *_args: object) -> FakeQuerySet:
-        return self
+    def order_by(self, *args: object) -> FakeQuerySet:
+        rows = list(self.rows)
+        for key in reversed(args):
+            key_str = str(key)
+            descending = key_str.startswith("-")
+            field = key_str[1:] if descending else key_str
+
+            def sort_key(row: dict[str, Any], f: str = field) -> object:
+                return row.get(f)
+
+            rows.sort(key=sort_key, reverse=descending)
+        return FakeQuerySet(rows)
 
     def count(self) -> int:
         return len(self.rows)
