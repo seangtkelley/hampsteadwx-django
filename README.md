@@ -263,13 +263,13 @@ heroku pg:info -a hampsteadwx-django
 
 ---
 
-## Deploying to Heroku (reference)
+## Deploying to Heroku
 
 This repo is set up for Heroku buildpack deployment:
 
-- `Procfile` — Gunicorn WSGI server
+- `Procfile` — release phase (migrations) and Gunicorn WSGI server
 - `runtime.txt` — Python version
-- `pyproject.toml` — project metadata and dependencies (source of truth)
+- `pyproject.toml` — project metadata, version, and dependencies (source of truth)
 - `requirements.txt` — production export for Heroku (`uv export --no-dev --no-hashes -o requirements.txt`)
 
 Typical config vars on the app:
@@ -277,11 +277,43 @@ Typical config vars on the app:
 - `SECRET_KEY`
 - `DATABASE_URL` (set automatically when Postgres is attached)
 
+### Automated releases
+
+Production deploys are triggered only when the version in `pyproject.toml` changes. After CI passes on `main`, GitHub Actions:
+
+1. Creates an annotated tag `v{version}` (e.g. `v2.0.1`)
+2. Fast-forwards the `production` branch to that commit
+3. Creates a GitHub Release for the tag
+
+Heroku auto-deploys from the `production` branch when CI checks on that commit are green.
+
+**To cut a release:**
+
+1. Bump `version` in `pyproject.toml`
+2. Regenerate `requirements.txt` if dependencies changed (`uv export --no-dev --no-hashes -o requirements.txt`)
+3. Merge to `main` and wait for CI to pass
+
+Merges to `main` that do not bump the version do not deploy.
+
+### One-time Heroku setup
+
+In the Heroku app **Deploy** tab for `hampsteadwx-django`:
+
+1. Connect the GitHub repository
+2. Enable automatic deploys from the **`production`** branch (not `main`)
+3. Check **Wait for CI to pass before deploy**
+4. Disable auto-deploy from `main` if it was previously enabled
+
+Protect the `production` branch in GitHub (restrict pushes to admins and GitHub Actions).
+
+### Manual deploy (fallback)
+
 ```bash
-git push heroku main
-heroku run python manage.py migrate -a hampsteadwx-django
+git push heroku production:main
 heroku logs --tail -a hampsteadwx-django
 ```
+
+Migrations run automatically via the `release` phase in `Procfile` on each deploy.
 
 ---
 

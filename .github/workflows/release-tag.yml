@@ -1,0 +1,62 @@
+name: Release tag
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main, master]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-tag-${{ github.event.workflow_run.head_sha }}
+  cancel-in-progress: false
+
+jobs:
+  tag-and-deploy-branch:
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+
+      - name: Detect unreleased version
+        id: version
+        run: |
+          git fetch --tags origin
+          NEW=$(grep '^version = ' pyproject.toml | sed 's/version = "\(.*\)"/\1/')
+          LATEST_TAG=$(git tag -l 'v*' --sort=-v:refname | head -n1)
+          if [ -n "$LATEST_TAG" ]; then
+            OLD=$(git show "$LATEST_TAG:pyproject.toml" | grep '^version = ' | sed 's/version = "\(.*\)"/\1/')
+          else
+            OLD=""
+          fi
+          if [ "$NEW" = "$OLD" ]; then
+            echo "Version $NEW already released (latest tag: ${LATEST_TAG:-none}); skipping."
+            echo "release=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          TAG="v$NEW"
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "Tag $TAG already exists; skipping."
+            echo "release=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "Unreleased version: ${OLD:-<none>} -> $NEW"
+          echo "release=true" >> "$GITHUB_OUTPUT"
+          echo "version=$NEW" >> "$GITHUB_OUTPUT"
+
+      - name: Update production branch and create tag
+        if: steps.version.outputs.release == 'true'
+        run: |
+          TAG="v${{ steps.version.outputs.version }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git push origin HEAD:production
+          git tag -a "$TAG" -m "Release $TAG"
+          git push origin "$TAG"
