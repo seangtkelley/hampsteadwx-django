@@ -264,7 +264,7 @@ This repo is set up for Heroku buildpack deployment:
 - `Procfile` — release phase (migrations) and Gunicorn WSGI server
 - `runtime.txt` — Python version
 - `pyproject.toml` — project metadata, version, and dependencies (source of truth)
-- `uv.lock` — locked dependencies for Heroku (installs production deps only)
+- `uv.lock` — locked dependencies for Heroku (the buildpack runs `uv sync --no-default-groups`, so dev deps are excluded in production)
 
 Typical config vars on the app:
 
