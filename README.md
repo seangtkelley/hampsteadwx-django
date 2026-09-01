@@ -144,13 +144,14 @@ uv run pytest
 **Integration tests** (PostgreSQL required). Create an empty DB if needed (`createdb hampsteadwx_test`), then:
 
 ```bash
-uv run pytest tests/integration
+# Override testpaths — a bare `pytest tests/integration` still uses tests/unit (pytest 9).
+uv run pytest -o testpaths=tests/integration
 ```
 
 Run both:
 
 ```bash
-uv run pytest tests/unit tests/integration
+uv run pytest -o "testpaths=tests/unit tests/integration"
 ```
 
 Coverage for the `api` package is enabled by default (`--cov`, with source/report options in `[tool.coverage]`). Markers: `unit`, `integration`. Default `testpaths` is `tests/unit` so plain `pytest` does not import or collect the integration suite.
@@ -174,7 +175,7 @@ uv run ruff check .
 uv run ruff format .
 uv run ty check
 uv run pytest                 # unit (tests/unit)
-uv run pytest tests/integration  # needs Postgres
+uv run pytest -o testpaths=tests/integration  # needs Postgres
 ```
 
 Configuration lives in `pyproject.toml` under `[tool.ruff]`, `[tool.ty]`, `[tool.pytest.ini_options]`, and `[tool.coverage]`.
@@ -314,4 +315,4 @@ heroku logs --tail -a hampsteadwx-django
 | `pg:pull` fails | Heroku CLI not logged in, missing local `pg_restore`, or Postgres not running |
 | Empty site after fresh migrate | No data yet — run `pg:pull` or load observations via your usual ingestion path |
 | `pytest` / integration: cannot connect to database | Postgres not running, bad `DATABASE_URL`, or test DB missing — create it (`createdb …`) and retry |
-| Integration suite not collected by plain `pytest` | Default `testpaths` is `tests/unit`; run `uv run pytest tests/integration` |
+| Integration suite not collected by plain `pytest` | Default `testpaths` is `tests/unit`; run `uv run pytest -o testpaths=tests/integration` |

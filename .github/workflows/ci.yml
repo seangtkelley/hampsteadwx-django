@@ -89,4 +89,6 @@ jobs:
         run: uv sync --frozen
 
       - name: Run integration tests
-        run: uv run pytest tests/integration
+        # Override testpaths: with testpaths=tests/unit in pyproject, a CLI path of
+        # tests/integration is ignored and unit tests run instead (pytest 9).
+        run: uv run pytest -o testpaths=tests/integration
