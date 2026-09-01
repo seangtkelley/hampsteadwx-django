@@ -291,6 +291,27 @@ def test_calc_monthly_summary_save_jan_season_string(
     assert snow.jan == Decimal("1.0")
 
 
+def test_calc_monthly_summary_update_omits_remarks(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Recalc update must not pass remarks (preserves existing DB remarks)."""
+    monkeypatch.setattr("api.utils.get_normals", lambda _year: MOCK_NORMALS)
+    patch_daily_ob_objects(
+        monkeypatch,
+        [fake_daily_row(date(2013, 7, 1), precip="0.2")],
+    )
+    monthly_manager = MagicMock()
+    monthly_manager.filter.return_value.exists.return_value = True
+    monthly_manager.filter.return_value.update.return_value = 1
+    monkeypatch.setattr("api.utils.models.MonthlySummary.objects", monthly_manager)
+
+    calc_monthly_summary(2013, 7, save_to_db=True)
+    monthly_manager.filter.return_value.update.assert_called_once()
+    update_kwargs = monthly_manager.filter.return_value.update.call_args.kwargs
+    assert "remarks" not in update_kwargs
+    assert float(update_kwargs["precip"]) == pytest.approx(0.2)
+
+
 def test_calc_annual_summary_create_and_update(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr("api.utils.get_normals", lambda _year: MOCK_NORMALS)
     rows = [

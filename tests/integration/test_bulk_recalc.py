@@ -33,3 +33,4 @@ def test_bulk_recalc_updates_summary() -> None:
     call_command("bulk_recalc", months=[2], years=[2013])
     summary = MonthlySummary.objects.get(date=date(2013, 2, 1))
     assert summary.precip == Decimal("0.2")
+    assert summary.remarks == "old"
