@@ -67,15 +67,18 @@ def summaries_monthly_submit(request: HttpRequest) -> HttpResponse:
     payload: dict[str, object] = {"title": "Submit Monthly Summary"}
 
     if request.method == "POST":
+        # calc monthly summary
         form = forms.SubmitMonthlyCSV(request.POST, request.FILES)
         if form.is_valid():
             if form.cleaned_data["password"] == os.environ.get("SITE_PASS"):
+                # move csv file
                 file_obj = cast(UploadedFile, request.FILES["csv_file"])
                 filepath = BASE_DIR / "static" / "csv" / str(file_obj.name)
                 with Path(filepath).open("wb+") as dest:
                     for chunk in file_obj.chunks():
                         dest.write(chunk)
 
+                # process csv
                 try:
                     year, month = utils.process_csv(filepath)
                 except Exception as e:
@@ -86,6 +89,7 @@ def summaries_monthly_submit(request: HttpRequest) -> HttpResponse:
                     )
                     return render(request, "summaries/monthly/submit.html", payload)
 
+                # calculate and save summaries
                 try:
                     utils.calc_monthly_summary(year, month, save_to_db=True)
                     utils.calc_annual_summary(year, save_to_db=True)
@@ -97,6 +101,7 @@ def summaries_monthly_submit(request: HttpRequest) -> HttpResponse:
                     )
                     return render(request, "summaries/monthly/submit.html", payload)
 
+                # prompt redirect
                 payload = utils.add_alert(
                     payload,
                     "success",
@@ -134,15 +139,19 @@ def summaries_monthly_view(request: HttpRequest, year: int, month: int) -> HttpR
     }
 
     if request.method == "POST":
+        # edit remarks
         form = forms.EditRemarks(request.POST)
         if form.is_valid():
             if form.cleaned_data["password"] == os.environ.get("SITE_PASS"):
+                # find summary
                 summary = models.MonthlySummary.objects.filter(
                     date__year=year, date__month=month
                 ).first()
                 if summary is not None:
+                    # edit remarks
                     summary.remarks = cast(str, form.cleaned_data["remarks"])
                     summary.save()
+                    # display alert
                     payload = utils.add_alert(
                         payload,
                         "success",
@@ -161,6 +170,7 @@ def summaries_monthly_view(request: HttpRequest, year: int, month: int) -> HttpR
         else:
             payload = utils.add_alert(payload, "danger", "Form data invalid.")
 
+    # get monthly summary
     if models.MonthlySummary.objects.filter(
         date__year=year, date__month=month
     ).exists():
@@ -174,6 +184,7 @@ def summaries_monthly_view(request: HttpRequest, year: int, month: int) -> HttpR
             f"{utils.get_month_name(month)} {year} Summary not found.",
         )
 
+    # get daily obs
     payload["daily_obs"] = models.DailyOb.objects.filter(
         date__year=year, date__month=month
     ).order_by("date")
@@ -194,15 +205,19 @@ def summaries_monthly_text(request: HttpRequest, year: int, month: int) -> HttpR
         "title": f"{utils.get_month_name(month)} {year} Monthly Summary"
     }
 
+    # get monthly summary
     if models.MonthlySummary.objects.filter(
         date__year=year, date__month=month
     ).exists():
+        # from database
         payload["monthly_summary"] = models.MonthlySummary.objects.filter(
             date__year=year, date__month=month
         ).first()
     else:
+        # summary not found
         raise Http404
 
+    # get normals
     normals = utils.get_normals(year)
     payload["AVG_TEMP"] = normals["temp"][month - 1]
     payload["AVG_PRECIP"] = normals["precip"][month - 1]
@@ -220,13 +235,16 @@ def summaries_monthly_csv(_request: HttpRequest, year: int, month: int) -> HttpR
     Raises:
         Http404: If the summary or source CSV cannot be found.
     """
+    # get summary
     if models.MonthlySummary.objects.filter(
         date__year=year, date__month=month
     ).exists():
+        # from database
         summary = models.MonthlySummary.objects.filter(
             date__year=year, date__month=month
         ).first()
     else:
+        # calc
         summary = utils.calc_monthly_summary(year, month)
 
     # Determine CSV path whether `summary` is a model instance or a dict
@@ -241,6 +259,7 @@ def summaries_monthly_csv(_request: HttpRequest, year: int, month: int) -> HttpR
         csv_path = getattr(summary, "csv_filepath", None)
 
     if csv_path and Path(csv_path).exists():
+        # read csv and build response
         with Path(csv_path).open("r") as fh:
             response = HttpResponse(fh.read(), content_type="text/csv")
             response["Content-Disposition"] = (
@@ -248,6 +267,7 @@ def summaries_monthly_csv(_request: HttpRequest, year: int, month: int) -> HttpR
             )
             return response
 
+    # csv not found
     raise Http404
 
 
@@ -270,11 +290,13 @@ def summaries_annual_view(request: HttpRequest, year: int) -> HttpResponse:
     """
     payload: dict[str, object] = {"title": f"{year} Annual Summary"}
 
+    # get annual summary
     if models.AnnualSummary.objects.filter(year=year).exists():
         payload["annual_summary"] = models.AnnualSummary.objects.filter(
             year=year
         ).first()
 
+        # get monthly summaries
         payload["monthly_summaries"] = models.MonthlySummary.objects.filter(
             date__year=year
         ).order_by("date")
@@ -295,6 +317,7 @@ def summaries_annual_text(request: HttpRequest, year: int) -> HttpResponse:
     """
     payload: dict[str, object] = {"title": f"{year} Annual Summary"}
 
+    # get annual summary
     if models.AnnualSummary.objects.filter(year=year).exists():
         payload["annual_summary"] = models.AnnualSummary.objects.filter(
             year=year
@@ -302,6 +325,7 @@ def summaries_annual_text(request: HttpRequest, year: int) -> HttpResponse:
     else:
         raise Http404
 
+    # get normals
     normals = utils.get_normals(year)
     payload["AVG_TEMP"] = normals["temp"][12]
     payload["AVG_PRECIP"] = normals["precip"][12]
@@ -321,11 +345,14 @@ def summaries_annual_table(request: HttpRequest, year: int) -> HttpResponse:
     """
     payload: dict[str, object] = {"title": f"{year} Annual Summary"}
 
+    # get annual summary
     if models.AnnualSummary.objects.filter(year=year).exists():
+        # get monthly summaries
         all_summaries: list[object] = list(
             models.MonthlySummary.objects.filter(date__year=year).order_by("date")
         )
 
+        # get annual
         all_summaries.append(models.AnnualSummary.objects.filter(year=year).first())
         payload["all_summaries"] = all_summaries
     else:
@@ -342,6 +369,7 @@ def summaries_snowseason_view(request: HttpRequest) -> HttpResponse:
     """
     payload: dict[str, object] = {"title": "Snow Season"}
 
+    # get snow seasons
     payload["summaries"] = models.SnowSeason.objects.all().order_by("season")
 
     return render(request, "summaries/snowseason/view.html", payload)
@@ -355,8 +383,10 @@ def summaries_snowseason_season(request: HttpRequest, season: str) -> HttpRespon
     """
     payload: dict[str, object] = {"title": f"{season} Snow Season"}
 
+    # get snow season
     payload["summary"] = models.SnowSeason.objects.filter(season=season).first()
 
+    # loop help
     payload["month_names"] = [
         "October",
         "November",
@@ -380,6 +410,7 @@ def summaries_peakfoliage_view(request: HttpRequest) -> HttpResponse:
     """
     payload: dict[str, object] = {"title": "Peak Foliage"}
 
+    # get peak foliage dates
     payload["peaks"] = models.PeakFoliage.objects.all().order_by("date")
 
     return render(request, "summaries/peakfoliage/view.html", payload)
@@ -393,6 +424,7 @@ def summaries_sunsetlake_view(request: HttpRequest) -> HttpResponse:
     """
     payload: dict[str, object] = {"title": "Sunset Lake Ice In/Ice Out"}
 
+    # get sunset lake summaries
     payload["summaries"] = models.SunsetLakeIceInIceOut.objects.all().order_by("season")
 
     return render(request, "summaries/sunsetlake/view.html", payload)
@@ -406,6 +438,7 @@ def summaries_precip_view(request: HttpRequest) -> HttpResponse:
     """
     payload: dict[str, object] = {"title": "Precipitation"}
 
+    # get monthly summaries
     payload["summaries"] = models.MonthlySummary.objects.all().order_by("date")
 
     return render(request, "summaries/precip/view.html", payload)

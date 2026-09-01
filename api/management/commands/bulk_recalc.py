@@ -92,10 +92,12 @@ class Command(BaseCommand):
         else:
             raise CommandError("Missing or malformed arguments.")
 
+        # loop thru and recalc each
         for summary in tqdm(monthly_summaries):
             utils.calc_monthly_summary(
                 summary.date.year, summary.date.month, save_to_db=True
             )
 
+        # loop thru and recalc each
         for summary in tqdm(annual_summaries):
             utils.calc_annual_summary(summary.year, save_to_db=True)

@@ -7,9 +7,11 @@ from django.db import models
 class DailyOb(models.Model):
     """Daily weather observation from a CSV upload."""
 
+    # metadata
     date = models.DateField()
     csv_filepath = models.CharField(max_length=512)
 
+    # weather fields
     max_temp = models.DecimalField(max_digits=8, decimal_places=1)
     min_temp = models.DecimalField(max_digits=8, decimal_places=1)
     atob_temp = models.DecimalField(max_digits=8, decimal_places=1)
@@ -19,7 +21,14 @@ class DailyOb(models.Model):
 
 
 class GeneralSummary(models.Model):
-    """Shared summary fields for monthly and annual climate summaries."""
+    """Shared summary fields for monthly and annual climate summaries.
+
+    Field name abbreviations:
+        grtr: greater
+        grtst: greatest
+        hdd: heating degree days
+        cdd: cooling degree days
+    """
 
     # temp fields
     max_temp = models.DecimalField(max_digits=8, decimal_places=1)
@@ -78,10 +87,12 @@ class GeneralSummary(models.Model):
 class MonthlySummary(GeneralSummary):
     """Monthly climate summary with remarks and year-to-date fields."""
 
+    # metadata
     date = models.DateField()  # day is always set to 1
     remarks = models.TextField()
     csv_filepath = models.CharField(max_length=512)
 
+    # year-to-date fields
     precip_todate = models.DecimalField(max_digits=8, decimal_places=3)
     precip_todate_dfn = models.DecimalField(max_digits=8, decimal_places=3)
 

@@ -158,7 +158,7 @@ def format_trace(value: object, arg: str) -> object:
     try:
         if Decimal(str(value)) == TRACE_VAL:
             if arg == "dec":
-                return 0.01
+                return 0.01  # for graphs
             if "str" in arg:
                 return "Trace"
             return ""
