@@ -137,13 +137,10 @@ def summaries_monthly_view(request: HttpRequest, year: int, month: int) -> HttpR
         form = forms.EditRemarks(request.POST)
         if form.is_valid():
             if form.cleaned_data["password"] == os.environ.get("SITE_PASS"):
-                if models.MonthlySummary.objects.filter(
+                summary = models.MonthlySummary.objects.filter(
                     date__year=year, date__month=month
-                ).exists():
-                    summary = models.MonthlySummary.objects.filter(
-                        date__year=year, date__month=month
-                    ).first()
-                    summary = cast(models.MonthlySummary, summary)
+                ).first()
+                if summary is not None:
                     summary.remarks = cast(str, form.cleaned_data["remarks"])
                     summary.save()
                     payload = utils.add_alert(

@@ -70,6 +70,7 @@ ignore = [
     "D212", # pydocstyle: incompatible with D213
     "D104", # pydocstyle: missing docstring in public package
     "D107", # pydocstyle: missing docstring in __init__
+    "N815", # pep8-naming: legacy mixedCase model fields map to DB columns
 ]
 
 [tool.ruff.lint.pydocstyle]

@@ -46,7 +46,7 @@ class GeneralSummary(models.Model):
 
     grtst_precip = models.DecimalField(max_digits=8, decimal_places=3)
     grtst_precip_dates = ArrayField(ArrayField(models.DateField()))
-    precip_grtrT = models.IntegerField()  # noqa: N815 — trace (T); DB column name
+    precip_grtrT = models.IntegerField()  # trace (T)
     precip_grtr01 = models.IntegerField()  # 01 = 0.01"
     precip_grtr10 = models.IntegerField()  # 10 = 0.10"
     precip_grtr50 = models.IntegerField()
@@ -58,7 +58,7 @@ class GeneralSummary(models.Model):
 
     grtst_sf = models.DecimalField(max_digits=8, decimal_places=3)
     grtst_sf_dates = ArrayField(ArrayField(models.DateField()))
-    sf_grtrT = models.IntegerField()  # noqa: N815 — trace (T); DB column name
+    sf_grtrT = models.IntegerField()  # trace (T)
     sf_grtr1 = models.IntegerField()  # in.
     sf_grtr3 = models.IntegerField()
     sf_grtr6 = models.IntegerField()
@@ -67,7 +67,7 @@ class GeneralSummary(models.Model):
 
     grtst_sd = models.DecimalField(max_digits=8, decimal_places=3)
     grtst_sd_dates = ArrayField(ArrayField(models.DateField()))
-    sd_grtrT = models.IntegerField()  # noqa: N815 — trace (T); DB column name
+    sd_grtrT = models.IntegerField()  # trace (T)
     sd_grtr1 = models.IntegerField()  # in.
     sd_grtr3 = models.IntegerField()
     sd_grtr6 = models.IntegerField()
