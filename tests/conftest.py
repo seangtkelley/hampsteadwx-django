@@ -12,7 +12,7 @@ import pytest
 os.environ.setdefault("SECRET_KEY", "test-secret-key-not-for-production")
 os.environ.setdefault(
     "DATABASE_URL",
-    "postgres://hampsteadwx_dev:test@127.0.0.1:5433/hampsteadwx_test",
+    "postgres://hampsteadwx_dev@localhost:5432/hampsteadwx_test",
 )
 
 FIXTURES_DIR = Path(__file__).resolve().parent / "fixtures"
