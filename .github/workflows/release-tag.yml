@@ -1,0 +1,65 @@
+name: Release tag
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main, master]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-tag-${{ github.event.workflow_run.head_sha }}
+  cancel-in-progress: false
+
+jobs:
+  tag-and-deploy-branch:
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+
+      - name: Detect version bump
+        id: version
+        run: |
+          NEW=$(grep '^version = ' pyproject.toml | sed 's/version = "\(.*\)"/\1/')
+          OLD=$(git show HEAD~1:pyproject.toml 2>/dev/null | grep '^version = ' | sed 's/version = "\(.*\)"/\1/' || true)
+          if [ "$NEW" = "$OLD" ]; then
+            echo "Version unchanged ($NEW); skipping."
+            echo "bump=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "Version bumped: ${OLD:-<none>} -> $NEW"
+          echo "bump=true" >> "$GITHUB_OUTPUT"
+          echo "version=$NEW" >> "$GITHUB_OUTPUT"
+
+      - name: Skip if release tag already exists
+        if: steps.version.outputs.bump == 'true'
+        id: tag_check
+        run: |
+          TAG="v${{ steps.version.outputs.version }}"
+          git fetch --tags origin
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "Tag $TAG already exists; skipping."
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create tag and update production branch
+        if: >-
+          steps.version.outputs.bump == 'true' &&
+          steps.tag_check.outputs.exists == 'false'
+        run: |
+          TAG="v${{ steps.version.outputs.version }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$TAG" -m "Release $TAG"
+          git push origin "$TAG"
+          git push origin HEAD:production
