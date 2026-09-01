@@ -18,7 +18,7 @@ numpy==1.22.4
     #   pandas
 pandas==1.4.4
     # via hampsteadwx-django
-psycopg2==2.9.12
+psycopg2-binary==2.9.12
     # via hampsteadwx-django
 python-dateutil==2.9.0.post0
     # via pandas
