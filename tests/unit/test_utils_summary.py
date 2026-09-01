@@ -176,7 +176,7 @@ def test_calc_monthly_summary_departures(monkeypatch: pytest.MonkeyPatch) -> Non
     assert summary["precip_todate"] == Decimal("2.0")
 
 
-def test_calc_monthly_summary_precip_todate_none_when_only_traces(
+def test_calc_monthly_summary_precip_todate_zero_when_only_traces(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr("api.utils.get_normals", lambda _year: MOCK_NORMALS)
