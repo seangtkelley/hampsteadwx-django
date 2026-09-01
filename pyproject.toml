@@ -36,14 +36,20 @@ markers = [
     "integration: tests that require PostgreSQL",
 ]
 addopts = [
-    "-m not integration",
-    "--cov=api",
-    "--cov-report=term-missing:skip-covered",
-    "--cov-fail-under=0",
+    "-m",
+    "not integration",
+    "--cov",
 ]
 filterwarnings = [
     "ignore::DeprecationWarning",
 ]
+
+[tool.coverage.run]
+source = ["api"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
 
 [tool.uv]
 default-groups = ["dev"]

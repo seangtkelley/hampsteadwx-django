@@ -153,7 +153,7 @@ Run both:
 uv run pytest -m "unit or integration"
 ```
 
-Coverage for the `api` package is enabled by default (`--cov=api`). Markers: `unit`, `integration`. Default `addopts` excludes integration (`-m "not integration"`).
+Coverage for the `api` package is enabled by default (`--cov`, with source/report options in `[tool.coverage]`). Markers: `unit`, `integration`. Default `addopts` excludes integration (`-m "not integration"`).
 
 Shared fixtures: `tests/conftest.py`, `tests/fixtures/sample_daily.csv`. Integration-only factories live in `tests/integration/conftest.py`.
 
@@ -177,7 +177,7 @@ uv run pytest                 # unit
 uv run pytest -m integration  # needs Postgres
 ```
 
-Configuration lives in `pyproject.toml` under `[tool.ruff]`, `[tool.ty]`, and `[tool.pytest.ini_options]`.
+Configuration lives in `pyproject.toml` under `[tool.ruff]`, `[tool.ty]`, `[tool.pytest.ini_options]`, and `[tool.coverage]`.
 
 Pull requests run the same checks via [`.github/workflows/ci.yml`](.github/workflows/ci.yml): Ruff (lint + format), `ty`, unit tests, and integration tests against a PostgreSQL 16 service.
 
@@ -288,7 +288,7 @@ heroku logs --tail -a hampsteadwx-django
 
 | Path | Purpose |
 |------|---------|
-| `pyproject.toml` | Dependencies, Ruff, ty, and pytest configuration |
+| `pyproject.toml` | Dependencies, Ruff, ty, pytest, and coverage configuration |
 | `boilerplate/settings.py` | Django settings; DB via `DATABASE_URL` |
 | `boilerplate/settings_secret.py.template` | Copy to `settings_secret.py` for local `DEBUG` / hosts |
 | `boilerplate/settings_secret.py` | Local overrides (gitignored) |
