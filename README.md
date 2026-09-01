@@ -179,6 +179,8 @@ uv run pytest -m integration  # needs Postgres
 
 Configuration lives in `pyproject.toml` under `[tool.ruff]`, `[tool.ty]`, and `[tool.pytest.ini_options]`.
 
+Pull requests run the same checks via [`.github/workflows/ci.yml`](.github/workflows/ci.yml): Ruff (lint + format), `ty`, unit tests, and integration tests against a PostgreSQL 16 service.
+
 ### Management commands
 
 Recalculate stored summaries after changing calculation logic in `api/utils.py`:
