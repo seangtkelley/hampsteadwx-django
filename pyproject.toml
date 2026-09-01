@@ -18,9 +18,31 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "coverage>=7.0",
     "django-stubs[compatible-mypy]>=4.2",
+    "pytest>=8.0",
+    "pytest-cov>=5.0",
+    "pytest-django>=4.8",
     "ruff>=0.11",
     "ty>=0.0.1a19",
+]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "boilerplate.settings"
+pythonpath = ["."]
+testpaths = ["tests"]
+markers = [
+    "unit: fast tests with DB/filesystem dependencies mocked",
+    "integration: tests that require PostgreSQL",
+]
+addopts = [
+    "-m not integration",
+    "--cov=api",
+    "--cov-report=term-missing:skip-covered",
+    "--cov-fail-under=0",
+]
+filterwarnings = [
+    "ignore::DeprecationWarning",
 ]
 
 [tool.uv]
@@ -80,8 +102,8 @@ convention = "google"
 known-first-party = ["api", "boilerplate"]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**/*.py" = ["D", "DOC"]
-"**/tests.py" = ["D", "DOC"]
+"tests/**/*.py" = ["D", "DOC", "ANN", "ARG", "PERF401", "RUF069", "PT019"]
+"**/tests.py" = ["D", "DOC", "ANN", "ARG"]
 "**/migrations/*.py" = ["D", "ANN"]
 
 [tool.ruff.format]

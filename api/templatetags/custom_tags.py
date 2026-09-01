@@ -1,5 +1,7 @@
 """Custom Django template filters for summary rendering."""
 
+from __future__ import annotations
+
 import math
 import re
 from collections.abc import Iterable, Mapping, Sequence
