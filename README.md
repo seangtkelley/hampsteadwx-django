@@ -27,7 +27,7 @@ Production: [hampsteadwx-django.herokuapp.com](http://hampsteadwx-django.herokua
 | Tool | Notes |
 |------|--------|
 | [uv](https://docs.astral.sh/uv/) | Python version and virtualenv management |
-| PostgreSQL 14+ | **Required** — see [Database](#database-postgresql-required) |
+| PostgreSQL 14+ | **Required** to run the app and **integration** tests (ArrayField). Unit tests mock the ORM and do not query Postgres. |
 | [Heroku CLI](https://devcenter.heroku.com/articles/heroku-cli) | Optional; needed to pull production data |
 
 Python **3.10.9** is pinned in `.python-version` and `runtime.txt`. Match that locally to stay aligned with Heroku.
@@ -46,7 +46,7 @@ uv sync
 source .venv/bin/activate   # Windows: .venv\Scripts\activate
 ```
 
-Dependencies are declared in `pyproject.toml`. `uv sync` installs runtime and dev dependencies (including [Ruff](https://docs.astral.sh/ruff/) and [ty](https://docs.astral.sh/ty/)) from the lockfile.
+Dependencies are declared in `pyproject.toml`. `uv sync` installs runtime and **dev** dependencies (Ruff, ty, pytest, pytest-django, pytest-cov) from the lockfile.
 
 If `uv sync` fails building `psycopg2`, install PostgreSQL client libraries locally (e.g. `brew install libpq` and ensure `pg_config` is on your `PATH`).
 
@@ -121,7 +121,44 @@ Optional: create a superuser for the admin site.
 python manage.py createsuperuser
 ```
 
-### 5. Static files (optional locally)
+### 5. Running tests
+
+Tests live under `tests/` and use **pytest** + **pytest-django** + **pytest-cov**. Config is in `pyproject.toml` under `[tool.pytest.ini_options]`.
+
+| Suite | Location | What it does | Postgres? |
+|-------|----------|--------------|-----------|
+| **Unit** (default) | `tests/unit/` | Mocks ORM, normals files, and `render`; covers utils, views, forms, filters, `bulk_recalc` | No (not queried) |
+| **Integration** | `tests/integration/` | Real ORM + HTTP client against ArrayField models | Yes |
+
+**Unit tests** (default — no DB connection):
+
+```bash
+export SECRET_KEY='test-secret-key-not-for-production'
+# Django settings still require DATABASE_URL at import time; it is not queried by unit tests.
+export DATABASE_URL='postgres://hampsteadwx_dev@localhost:5432/hampsteadwx_test'
+
+uv sync
+uv run pytest
+```
+
+**Integration tests** (PostgreSQL required). Create an empty DB if needed (`createdb hampsteadwx_test`), then:
+
+```bash
+# Override testpaths — a bare `pytest tests/integration` still uses tests/unit (pytest 9).
+uv run pytest -o testpaths=tests/integration --no-cov
+```
+
+Run both:
+
+```bash
+uv run pytest -o "testpaths=tests/unit tests/integration"
+```
+
+Coverage for the `api` package is enabled by default (`--cov`, with source/report options in `[tool.coverage]`). Markers: `unit`, `integration`. Default `testpaths` is `tests/unit` so plain `pytest` does not import or collect the integration suite.
+
+Shared fixtures: `tests/conftest.py`, `tests/fixtures/sample_daily.csv`. Integration-only factories live in `tests/integration/conftest.py`.
+
+### 6. Static files (optional locally)
 
 Production uses WhiteNoise with compressed manifest storage. For local dev, Django serves `STATICFILES_DIRS` automatically. To mimic production:
 
@@ -131,15 +168,19 @@ python manage.py collectstatic --noinput
 
 ### Code quality
 
-Lint, format, and type-check with Ruff and ty:
+Lint, format, type-check, and test:
 
 ```bash
 uv run ruff check .
 uv run ruff format .
 uv run ty check
+uv run pytest                 # unit (tests/unit)
+uv run pytest -o testpaths=tests/integration --no-cov  # needs Postgres
 ```
 
-Configuration lives in `pyproject.toml` under `[tool.ruff]` and `[tool.ty]`.
+Configuration lives in `pyproject.toml` under `[tool.ruff]`, `[tool.ty]`, `[tool.pytest.ini_options]`, and `[tool.coverage]`.
+
+Pull requests run the same checks via [`.github/workflows/ci.yml`](.github/workflows/ci.yml): Ruff (lint + format), `ty`, unit tests, and integration tests against a PostgreSQL 16 service.
 
 ### Management commands
 
@@ -248,13 +289,17 @@ heroku logs --tail -a hampsteadwx-django
 
 | Path | Purpose |
 |------|---------|
-| `pyproject.toml` | Dependencies, Ruff, and ty configuration |
+| `pyproject.toml` | Dependencies, Ruff, ty, pytest, and coverage configuration |
 | `boilerplate/settings.py` | Django settings; DB via `DATABASE_URL` |
 | `boilerplate/settings_secret.py.template` | Copy to `settings_secret.py` for local `DEBUG` / hosts |
 | `boilerplate/settings_secret.py` | Local overrides (gitignored) |
 | `api/models.py` | Observations and summary models (Postgres arrays) |
 | `api/utils.py` | Summary calculations |
 | `api/management/commands/bulk_recalc.py` | Batch recalculation |
+| `tests/conftest.py` | Shared pytest env defaults and helpers |
+| `tests/fixtures/` | Sample observation CSV for tests |
+| `tests/unit/` | Fast unit tests (mocked ORM/filesystem) |
+| `tests/integration/` | PostgreSQL-backed integration tests |
 | `static/csv/` | Climate normals CSV inputs |
 | `templates/` | Summary and layout templates |
 
@@ -269,3 +314,5 @@ heroku logs --tail -a hampsteadwx-django
 | `SECRET_KEY` / `DATABASE_URL` errors | Exports missing; check `heroku config` for production values |
 | `pg:pull` fails | Heroku CLI not logged in, missing local `pg_restore`, or Postgres not running |
 | Empty site after fresh migrate | No data yet — run `pg:pull` or load observations via your usual ingestion path |
+| `pytest` / integration: cannot connect to database | Postgres not running, bad `DATABASE_URL`, or test DB missing — create it (`createdb …`) and retry |
+| Integration suite not collected by plain `pytest` | Default `testpaths` is `tests/unit`; run `uv run pytest -o testpaths=tests/integration --no-cov` |

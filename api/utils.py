@@ -21,7 +21,14 @@ ZERO = Decimal("0")
 
 
 def _numeric_series_to_decimals(series: pd.Series, column: str) -> list[Decimal]:
-    """Convert a numeric Series to Decimals, rejecting NaNs from coerce."""
+    """Convert a numeric Series to Decimals, rejecting NaNs from coerce.
+
+    Returns:
+        List of Decimal values corresponding to the series.
+
+    Raises:
+        ValueError: If any value is NaN after numeric coercion.
+    """
     if series.isna().any():
         raise ValueError(f"Invalid numeric values in normals column {column}")
     return [Decimal(str(v)) for v in series]
