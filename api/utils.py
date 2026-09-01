@@ -110,15 +110,14 @@ def get_normals(year: int) -> dict[str, list[Decimal]]:
         normals["precip"] = list(df["MLY-PRCP-NORMAL"])
         normals["sf"] = list(df["MLY-SNOW-NORMAL"])
 
-        # calc annual norms
+        # Annual norms: temp is mean of months; precip/snow are yearly totals
+        # (matches HMPN3 convention used for years < 2022).
         if len(normals["temp"]) > 0:
             normals["temp"].append(sum(normals["temp"]) / Decimal(len(normals["temp"])))
         if len(normals["precip"]) > 0:
-            normals["precip"].append(
-                sum(normals["precip"]) / Decimal(len(normals["precip"]))
-            )
+            normals["precip"].append(sum(normals["precip"]))
         if len(normals["sf"]) > 0:
-            normals["sf"].append(sum(normals["sf"]) / Decimal(len(normals["sf"])))
+            normals["sf"].append(sum(normals["sf"]))
     else:
         filepath = BASE_DIR / "static" / "csv" / "HMPN3-Monthly-Climate-Normals.csv"
         with Path(filepath).open() as f:
