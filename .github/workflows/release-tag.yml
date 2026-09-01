@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: write
+  actions: write
 
 concurrency:
   group: release-tag-${{ github.event.workflow_run.head_sha }}
@@ -60,3 +61,9 @@ jobs:
           git push origin HEAD:refs/heads/production
           git tag -a "$TAG" -m "Release $TAG"
           git push origin "$TAG"
+
+      - name: Trigger release workflow
+        if: steps.version.outputs.release == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh workflow run release.yml --ref "v${{ steps.version.outputs.version }}"
