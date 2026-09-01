@@ -17,6 +17,15 @@ from boilerplate.settings import BASE_DIR, TRACE_VAL
 
 from . import models
 
+ZERO = Decimal("0")
+
+
+def _numeric_series_to_decimals(series: pd.Series, column: str) -> list[Decimal]:
+    """Convert a numeric Series to Decimals, rejecting NaNs from coerce."""
+    if series.isna().any():
+        raise ValueError(f"Invalid numeric values in normals column {column}")
+    return [Decimal(str(v)) for v in series]
+
 
 def get_month_name(num: int) -> str:
     """Return the full month name for a month number."""
@@ -97,9 +106,9 @@ def get_normals(year: int) -> dict[str, list[Decimal]]:
         precip = pd.to_numeric(df["MLY-PRCP-NORMAL"], errors="coerce")
         sf = pd.to_numeric(df["MLY-SNOW-NORMAL"], errors="coerce")
 
-        normals["temp"] = [Decimal(str(v)) for v in temp]
-        normals["precip"] = [Decimal(str(v)) for v in precip]
-        normals["sf"] = [Decimal(str(v)) for v in sf]
+        normals["temp"] = _numeric_series_to_decimals(temp, "MLY-TAVG-NORMAL")
+        normals["precip"] = _numeric_series_to_decimals(precip, "MLY-PRCP-NORMAL")
+        normals["sf"] = _numeric_series_to_decimals(sf, "MLY-SNOW-NORMAL")
 
         # Annual norms: temp is mean of months; precip/snow are yearly totals
         # (matches HMPN3 convention used for years < 2022).
@@ -211,18 +220,21 @@ def calc_monthly_summary(year: int, month: int, save_to_db: bool = False) -> obj
         .exclude(precip=TRACE_VAL)
         .aggregate(Sum("precip"))["precip__sum"]
     )  # sum over all precip except traces
+    if precip_todate is None:
+        precip_todate = ZERO
     summary["precip_todate"] = precip_todate
     summary["precip_todate_dfn"] = precip_todate - sum(normals["precip"][:month])
 
     # snowfall to date
     if month >= 10:
-        summary["sf_todate"] = (
+        sf_todate = (
             models.DailyOb.objects.filter(
                 date__year=year, date__month__in=list(range(10, month + 1))
             )
             .exclude(snowfall=TRACE_VAL)
             .aggregate(Sum("snowfall"))["snowfall__sum"]
         )  # same as above
+        summary["sf_todate"] = ZERO if sf_todate is None else sf_todate
 
         summary["sf_todate_dfn"] = summary["sf_todate"] - sum(normals["sf"][9:month])
 
@@ -236,24 +248,25 @@ def calc_monthly_summary(year: int, month: int, save_to_db: bool = False) -> obj
             .aggregate(Sum("snowfall"))["snowfall__sum"]
         )
         summary["sf_todate"] = (
-            prev_year_sf if prev_year_sf else 0
+            prev_year_sf if prev_year_sf is not None else ZERO
         )  # small check if we don't have prev year snowfall
 
         # get this year's snow
-        summary["sf_todate"] += (
+        this_year_sf = (
             models.DailyOb.objects.filter(
                 date__year=year, date__month__in=list(range(1, month + 1))
             )
             .exclude(snowfall=TRACE_VAL)
             .aggregate(Sum("snowfall"))["snowfall__sum"]
         )
+        summary["sf_todate"] += ZERO if this_year_sf is None else this_year_sf
 
         summary["sf_todate_dfn"] = (
             summary["sf_todate"] - sum(normals["sf"][9:12]) - sum(normals["sf"][:month])
         )
     else:
-        summary["sf_todate"] = 0
-        summary["sf_todate_dfn"] = 0
+        summary["sf_todate"] = ZERO
+        summary["sf_todate_dfn"] = ZERO
 
     if save_to_db:
         if models.MonthlySummary.objects.filter(date=summary["date"]).exists():
@@ -275,7 +288,17 @@ def calc_monthly_summary(year: int, month: int, save_to_db: bool = False) -> obj
             )
 
             setattr(snowseason, get_month_abbr(month), summary["sf"])
-            snowseason.total = snowseason.total + summary["sf"]
+            # Recompute from month fields so recalculating a month does not over-count.
+            snowseason.total = (
+                snowseason.oct
+                + snowseason.nov
+                + snowseason.dec
+                + snowseason.jan
+                + snowseason.feb
+                + snowseason.mar
+                + snowseason.apr
+                + snowseason.may
+            )
             snowseason.save()
 
         return db_summary

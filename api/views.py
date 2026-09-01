@@ -73,7 +73,8 @@ def summaries_monthly_submit(request: HttpRequest) -> HttpResponse:
             if form.cleaned_data["password"] == os.environ.get("SITE_PASS"):
                 # move csv file
                 file_obj = cast(UploadedFile, request.FILES["csv_file"])
-                filepath = BASE_DIR / "static" / "csv" / str(file_obj.name)
+                # Use basename only to avoid path traversal via crafted filenames.
+                filepath = BASE_DIR / "static" / "csv" / Path(str(file_obj.name)).name
                 with Path(filepath).open("wb+") as dest:
                     for chunk in file_obj.chunks():
                         dest.write(chunk)
