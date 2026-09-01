@@ -6,7 +6,7 @@ source value is ``T``.
 
 from collections.abc import Iterable, Mapping
 from datetime import date
-from decimal import Decimal, getcontext
+from decimal import Decimal
 from pathlib import Path
 from typing import Any, cast
 
@@ -85,8 +85,6 @@ def get_normals(year: int) -> dict[str, list[Decimal]]:
         Climate normals keyed by measurement type.
     """
     normals: dict[str, list[Decimal]] = {}
-    # Ensure Decimal arithmetic precision is reasonable for averages
-    getcontext().prec = 9
     if year >= 2022:
         filepath = (
             BASE_DIR
@@ -94,32 +92,21 @@ def get_normals(year: int) -> dict[str, list[Decimal]]:
             / "csv"
             / "normals-monthly-1991-2020-2022-01-23T16-24-36.csv"
         )
+        df = pd.read_csv(filepath)
+        temp = pd.to_numeric(df["MLY-TAVG-NORMAL"], errors="coerce")
+        precip = pd.to_numeric(df["MLY-PRCP-NORMAL"], errors="coerce")
+        sf = pd.to_numeric(df["MLY-SNOW-NORMAL"], errors="coerce")
 
-        def decimal_converter(x: str) -> Decimal:
-            return Decimal(x)
-
-        df = pd.read_csv(
-            filepath,
-            converters={
-                "MLY-TAVG-NORMAL": decimal_converter,
-                "MLY-PRCP-NORMAL": decimal_converter,
-                "MLY-SNOW-NORMAL": decimal_converter,
-            },
-        )
-        normals["temp"] = list(df["MLY-TAVG-NORMAL"])
-        normals["precip"] = list(df["MLY-PRCP-NORMAL"])
-        normals["sf"] = list(df["MLY-SNOW-NORMAL"])
+        normals["temp"] = [Decimal(str(v)) for v in temp]
+        normals["precip"] = [Decimal(str(v)) for v in precip]
+        normals["sf"] = [Decimal(str(v)) for v in sf]
 
         # Annual norms: temp is mean of months; precip/snow are yearly totals
         # (matches HMPN3 convention used for years < 2022).
-        if len(normals["temp"]) > 0:
-            normals["temp"].append(
-                round(sum(normals["temp"]) / Decimal(len(normals["temp"])), 1)
-            )
-        if len(normals["precip"]) > 0:
-            normals["precip"].append(round(sum(normals["precip"]), 2))
-        if len(normals["sf"]) > 0:
-            normals["sf"].append(round(sum(normals["sf"]), 1))
+        if not temp.empty:
+            normals["temp"].append(Decimal(str(round(temp.mean(), 1))))
+            normals["precip"].append(Decimal(str(round(precip.sum(), 2))))
+            normals["sf"].append(Decimal(str(round(sf.sum(), 1))))
     else:
         filepath = BASE_DIR / "static" / "csv" / "HMPN3-Monthly-Climate-Normals.csv"
         with Path(filepath).open() as f:
