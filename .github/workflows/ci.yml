@@ -91,4 +91,5 @@ jobs:
       - name: Run integration tests
         # Override testpaths: with testpaths=tests/unit in pyproject, a CLI path of
         # tests/integration is ignored and unit tests run instead (pytest 9).
-        run: uv run pytest -o testpaths=tests/integration
+        # --no-cov: fail_under=90 is enforced on the unit job; integration alone is ~80%.
+        run: uv run pytest -o testpaths=tests/integration --no-cov
