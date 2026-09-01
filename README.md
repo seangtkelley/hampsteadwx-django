@@ -144,16 +144,16 @@ uv run pytest
 **Integration tests** (PostgreSQL required). Create an empty DB if needed (`createdb hampsteadwx_test`), then:
 
 ```bash
-uv run pytest -m integration
+uv run pytest tests/integration
 ```
 
 Run both:
 
 ```bash
-uv run pytest -m "unit or integration"
+uv run pytest tests/unit tests/integration
 ```
 
-Coverage for the `api` package is enabled by default (`--cov`, with source/report options in `[tool.coverage]`). Markers: `unit`, `integration`. Default `addopts` excludes integration (`-m "not integration"`).
+Coverage for the `api` package is enabled by default (`--cov`, with source/report options in `[tool.coverage]`). Markers: `unit`, `integration`. Default `testpaths` is `tests/unit` so plain `pytest` does not import or collect the integration suite.
 
 Shared fixtures: `tests/conftest.py`, `tests/fixtures/sample_daily.csv`. Integration-only factories live in `tests/integration/conftest.py`.
 
@@ -173,8 +173,8 @@ Lint, format, type-check, and test:
 uv run ruff check .
 uv run ruff format .
 uv run ty check
-uv run pytest                 # unit
-uv run pytest -m integration  # needs Postgres
+uv run pytest                 # unit (tests/unit)
+uv run pytest tests/integration  # needs Postgres
 ```
 
 Configuration lives in `pyproject.toml` under `[tool.ruff]`, `[tool.ty]`, `[tool.pytest.ini_options]`, and `[tool.coverage]`.
@@ -314,4 +314,4 @@ heroku logs --tail -a hampsteadwx-django
 | `pg:pull` fails | Heroku CLI not logged in, missing local `pg_restore`, or Postgres not running |
 | Empty site after fresh migrate | No data yet — run `pg:pull` or load observations via your usual ingestion path |
 | `pytest` / integration: cannot connect to database | Postgres not running, bad `DATABASE_URL`, or test DB missing — create it (`createdb …`) and retry |
-| Integration tests deselected unexpectedly | Default `addopts` is `-m "not integration"`; use `-m integration` or `-m "unit or integration"` |
+| Integration suite not collected by plain `pytest` | Default `testpaths` is `tests/unit`; run `uv run pytest tests/integration` |

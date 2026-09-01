@@ -30,14 +30,12 @@ dev = [
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "boilerplate.settings"
 pythonpath = ["."]
-testpaths = ["tests"]
+testpaths = ["tests/unit"]
 markers = [
     "unit: fast tests with DB/filesystem dependencies mocked",
     "integration: tests that require PostgreSQL",
 ]
 addopts = [
-    "-m",
-    "not integration",
     "--cov",
 ]
 filterwarnings = [
