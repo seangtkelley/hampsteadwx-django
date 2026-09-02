@@ -34,6 +34,32 @@ def _numeric_series_to_decimals(series: pd.Series, column: str) -> list[Decimal]
     return [Decimal(str(v)) for v in series]
 
 
+def _to_dec(value: object) -> Decimal:
+    """Convert a numeric value to Decimal via str to avoid float artifacts.
+
+    Returns:
+        Decimal representation of ``value``.
+    """
+    return Decimal(str(value))
+
+
+def _is_trace(value: object) -> bool:
+    """Return True when value represents a stored trace observation."""
+    return _to_dec(value) == TRACE_VAL
+
+
+def _sum_excluding_traces(series: pd.Series) -> Decimal:
+    """Sum series values, omitting trace observations.
+
+    Uses string-based Decimal conversion so float columns produced by
+    ``pd.to_numeric`` still match ``TRACE_VAL`` correctly.
+
+    Returns:
+        Sum of non-trace values as Decimal (zero when none).
+    """
+    return sum((_to_dec(v) for v in series if not _is_trace(v)), ZERO)
+
+
 def get_month_name(num: int) -> str:
     """Return the full month name for a month number."""
     return date(1900, num, 1).strftime("%B")
@@ -393,10 +419,14 @@ def calc_general_summary(df: pd.DataFrame) -> dict[str, object]:
             )
         ),
         # precip fields
+        # Compare via str->Decimal: monthly calc runs pd.to_numeric (float), and
+        # Decimal(0.001) != TRACE_VAL due to binary float artifacts (#16).
         "precip": TRACE_VAL
-        if Decimal(df.precip.max()) == TRACE_VAL
-        else Decimal(sum(df[df.precip != TRACE_VAL].precip)),
-        "grtst_precip": Decimal(df.precip.max()),
+        if _is_trace(df.precip.max())
+        else _sum_excluding_traces(df.precip),
+        "grtst_precip": TRACE_VAL
+        if _is_trace(df.precip.max())
+        else _to_dec(df.precip.max()),
         "grtst_precip_dates": []
         if df.precip.max() == 0
         else list(df[df.precip == df.precip.max()].date),
@@ -407,9 +437,11 @@ def calc_general_summary(df: pd.DataFrame) -> dict[str, object]:
         "precip_grtr100": len(df[df.precip >= 1]),
         # snowfall and snowdepth fields
         "sf": TRACE_VAL
-        if Decimal(df.snowfall.max()) == TRACE_VAL
-        else Decimal(sum(df[df.snowfall != TRACE_VAL].snowfall)),
-        "grtst_sf": Decimal(df.snowfall.max()),
+        if _is_trace(df.snowfall.max())
+        else _sum_excluding_traces(df.snowfall),
+        "grtst_sf": TRACE_VAL
+        if _is_trace(df.snowfall.max())
+        else _to_dec(df.snowfall.max()),
         "grtst_sf_dates": []
         if df.snowfall.max() == 0
         else list(df[df.snowfall == df.snowfall.max()].date),
@@ -419,7 +451,9 @@ def calc_general_summary(df: pd.DataFrame) -> dict[str, object]:
         "sf_grtr6": len(df[df.snowfall >= 6]),
         "sf_grtr12": len(df[df.snowfall >= 12]),
         "sf_grtr18": len(df[df.snowfall >= 18]),
-        "grtst_sd": Decimal(df.snowdepth.max()),
+        "grtst_sd": TRACE_VAL
+        if _is_trace(df.snowdepth.max())
+        else _to_dec(df.snowdepth.max()),
         "grtst_sd_dates": []
         if df.snowdepth.max() == 0
         else list(df[df.snowdepth == df.snowdepth.max()].date),
