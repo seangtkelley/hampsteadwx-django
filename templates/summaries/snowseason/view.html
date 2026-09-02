@@ -18,7 +18,7 @@
             dataTable.addRows([
 
                 {% for summary in summaries %}
-                    ['{{ summary.season }}', {{ summary.total }}, '{{ summary.total }}' ],
+                    ['{{ summary.season }}', {{ summary.total|format_trace:'dec' }}, '{{ summary.total|format_trace:'str:snow' }}' ],
                 {% endfor %}
 
             ]);

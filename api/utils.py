@@ -60,6 +60,46 @@ def _sum_excluding_traces(series: pd.Series) -> Decimal:
     return sum((_to_dec(v) for v in series if not _is_trace(v)), ZERO)
 
 
+def _total_with_optional_trace(
+    measurable_sum: Decimal | None, *, has_trace: bool
+) -> Decimal:
+    """Collapse a period total to TRACE when only traces (and zeros) occurred.
+
+    Returns:
+        Measurable sum, ``TRACE_VAL`` when traces exist but no measurable
+        accumulation, or zero when the period has neither.
+    """
+    if measurable_sum is None:
+        return TRACE_VAL if has_trace else ZERO
+    if measurable_sum == ZERO and has_trace:
+        return TRACE_VAL
+    return measurable_sum
+
+
+def _snowseason_total(snowseason: models.SnowSeason) -> Decimal:
+    """Recompute a snow-season total from monthly fields.
+
+    Trace months are omitted from the inch sum; if every non-zero month is a
+    trace, the season total is ``TRACE_VAL`` (not a sum of 0.001s).
+
+    Returns:
+        Season snowfall total suitable for storage and Trace display.
+    """
+    months = [
+        snowseason.oct,
+        snowseason.nov,
+        snowseason.dec,
+        snowseason.jan,
+        snowseason.feb,
+        snowseason.mar,
+        snowseason.apr,
+        snowseason.may,
+    ]
+    measurable = sum((_to_dec(m) for m in months if not _is_trace(m)), ZERO)
+    has_trace = any(_is_trace(m) for m in months)
+    return _total_with_optional_trace(measurable, has_trace=has_trace)
+
+
 def get_month_name(num: int) -> str:
     """Return the full month name for a month number."""
     return date(1900, num, 1).strftime("%B")
@@ -223,10 +263,10 @@ def calc_monthly_summary(year: int, month: int, save_to_db: bool = False) -> obj
     if obs.count() == 0:
         return None
 
-    # convert to dataframe
+    # convert to dataframe — keep precip/snow as Decimal (avoid float TRACE bugs)
     df = pd.DataFrame.from_records(obs.values())
-    df[["max_temp", "min_temp", "atob_temp", "precip", "snowfall", "snowdepth"]] = df[
-        ["max_temp", "min_temp", "atob_temp", "precip", "snowfall", "snowdepth"]
+    df[["max_temp", "min_temp", "atob_temp"]] = df[
+        ["max_temp", "min_temp", "atob_temp"]
     ].apply(pd.to_numeric)
 
     # calc general
@@ -245,54 +285,56 @@ def calc_monthly_summary(year: int, month: int, save_to_db: bool = False) -> obj
     summary["precip_dfn"] = Decimal(str(summary["precip"])) - norm_precip
     summary["sf_dfn"] = Decimal(str(summary["sf"])) - norm_sf
 
-    # precip to date
-    precip_todate = (
-        models.DailyOb.objects.filter(
-            date__year=year, date__month__in=list(range(1, month + 1))
-        )
-        .exclude(precip=TRACE_VAL)
-        .aggregate(Sum("precip"))["precip__sum"]
-    )  # sum over all precip except traces
-    if precip_todate is None:
-        precip_todate = ZERO
+    # precip to date (measurable inches; TRACE when only T days so far)
+    precip_qs = models.DailyOb.objects.filter(
+        date__year=year, date__month__in=list(range(1, month + 1))
+    )
+    precip_todate = _total_with_optional_trace(
+        precip_qs.exclude(precip=TRACE_VAL).aggregate(Sum("precip"))["precip__sum"],
+        has_trace=precip_qs.filter(precip=TRACE_VAL).exists(),
+    )
     summary["precip_todate"] = precip_todate
     summary["precip_todate_dfn"] = precip_todate - sum(normals["precip"][:month])
 
     # snowfall to date
     if month >= 10:
-        sf_todate = (
-            models.DailyOb.objects.filter(
-                date__year=year, date__month__in=list(range(10, month + 1))
-            )
-            .exclude(snowfall=TRACE_VAL)
-            .aggregate(Sum("snowfall"))["snowfall__sum"]
-        )  # same as above
-        summary["sf_todate"] = ZERO if sf_todate is None else sf_todate
-
+        sf_qs = models.DailyOb.objects.filter(
+            date__year=year, date__month__in=list(range(10, month + 1))
+        )
+        summary["sf_todate"] = _total_with_optional_trace(
+            sf_qs.exclude(snowfall=TRACE_VAL).aggregate(Sum("snowfall"))[
+                "snowfall__sum"
+            ],
+            has_trace=sf_qs.filter(snowfall=TRACE_VAL).exists(),
+        )
         summary["sf_todate_dfn"] = summary["sf_todate"] - sum(normals["sf"][9:month])
 
     elif month <= 5:
-        # get last year's snow
-        prev_year_sf = (
-            models.DailyOb.objects.filter(
-                date__year=year - 1, date__month__in=[10, 11, 12]
-            )
-            .exclude(snowfall=TRACE_VAL)
-            .aggregate(Sum("snowfall"))["snowfall__sum"]
+        prev_qs = models.DailyOb.objects.filter(
+            date__year=year - 1, date__month__in=[10, 11, 12]
         )
-        summary["sf_todate"] = (
-            prev_year_sf if prev_year_sf is not None else ZERO
-        )  # small check if we don't have prev year snowfall
-
-        # get this year's snow
-        this_year_sf = (
-            models.DailyOb.objects.filter(
-                date__year=year, date__month__in=list(range(1, month + 1))
-            )
-            .exclude(snowfall=TRACE_VAL)
-            .aggregate(Sum("snowfall"))["snowfall__sum"]
+        this_qs = models.DailyOb.objects.filter(
+            date__year=year, date__month__in=list(range(1, month + 1))
         )
-        summary["sf_todate"] += ZERO if this_year_sf is None else this_year_sf
+        prev_sum = prev_qs.exclude(snowfall=TRACE_VAL).aggregate(Sum("snowfall"))[
+            "snowfall__sum"
+        ]
+        this_sum = this_qs.exclude(snowfall=TRACE_VAL).aggregate(Sum("snowfall"))[
+            "snowfall__sum"
+        ]
+        if prev_sum is None and this_sum is None:
+            measurable_or_none: Decimal | None = None
+        else:
+            measurable_or_none = (ZERO if prev_sum is None else prev_sum) + (
+                ZERO if this_sum is None else this_sum
+            )
+        has_trace = (
+            prev_qs.filter(snowfall=TRACE_VAL).exists()
+            or this_qs.filter(snowfall=TRACE_VAL).exists()
+        )
+        summary["sf_todate"] = _total_with_optional_trace(
+            measurable_or_none, has_trace=has_trace
+        )
 
         summary["sf_todate_dfn"] = (
             summary["sf_todate"] - sum(normals["sf"][9:12]) - sum(normals["sf"][:month])
@@ -322,16 +364,7 @@ def calc_monthly_summary(year: int, month: int, save_to_db: bool = False) -> obj
 
             setattr(snowseason, get_month_abbr(month), summary["sf"])
             # Recompute from month fields so recalculating a month does not over-count.
-            snowseason.total = (
-                snowseason.oct
-                + snowseason.nov
-                + snowseason.dec
-                + snowseason.jan
-                + snowseason.feb
-                + snowseason.mar
-                + snowseason.apr
-                + snowseason.may
-            )
+            snowseason.total = _snowseason_total(snowseason)
             snowseason.save()
 
         return db_summary
