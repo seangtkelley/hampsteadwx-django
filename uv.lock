@@ -1,6 +1,6 @@
 version = 1
 revision = 3
-requires-python = ">=3.10.9, <3.11"
+requires-python = "==3.10.*"
 
 [[package]]
 name = "asgiref"
@@ -155,7 +155,7 @@ wheels = [
 
 [[package]]
 name = "hampsteadwx-django"
-version = "2.2.0"
+version = "2.2.2"
 source = { virtual = "." }
 dependencies = [
     { name = "asgiref" },
