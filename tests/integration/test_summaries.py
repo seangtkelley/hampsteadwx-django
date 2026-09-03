@@ -7,8 +7,8 @@ import pytest
 
 from api.models import AnnualSummary, DailyOb, MonthlySummary, SnowSeason
 from api.utils import calc_annual_summary, calc_monthly_summary
-from tests.integration.conftest import make_daily_ob, make_daily_obs_for_month
 from boilerplate.settings import TRACE_VAL
+from tests.integration.conftest import make_daily_ob, make_daily_obs_for_month
 
 pytestmark = [pytest.mark.integration, pytest.mark.django_db]
 
