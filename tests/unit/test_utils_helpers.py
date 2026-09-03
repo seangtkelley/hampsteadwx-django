@@ -1,14 +1,21 @@
 """Unit tests for pure helper utilities."""
 
+from decimal import Decimal
+from unittest.mock import MagicMock
+
 import pytest
 
 from api.utils import (
+    ZERO,
+    _snowseason_total,
+    _total_with_optional_trace,
     add_alert,
     create_alert,
     empty_snowseason,
     get_month_abbr,
     get_month_name,
 )
+from boilerplate.settings import TRACE_VAL
 
 pytestmark = pytest.mark.unit
 
@@ -47,3 +54,28 @@ def test_empty_snowseason() -> None:
     assert result["oct"] == 0
     assert result["may"] == 0
     assert result["total"] == 0
+
+
+def test_total_with_optional_trace() -> None:
+    assert _total_with_optional_trace(None, has_trace=False) == ZERO
+    assert _total_with_optional_trace(None, has_trace=True) == TRACE_VAL
+    assert _total_with_optional_trace(ZERO, has_trace=True) == TRACE_VAL
+    assert _total_with_optional_trace(ZERO, has_trace=False) == ZERO
+    assert _total_with_optional_trace(Decimal("2.5"), has_trace=True) == Decimal("2.5")
+
+
+def test_snowseason_total_collapses_traces() -> None:
+    snow = MagicMock(
+        oct=TRACE_VAL,
+        nov=TRACE_VAL,
+        dec=ZERO,
+        jan=ZERO,
+        feb=ZERO,
+        mar=ZERO,
+        apr=ZERO,
+        may=ZERO,
+    )
+    assert _snowseason_total(snow) == TRACE_VAL
+
+    snow.nov = Decimal("4.0")
+    assert _snowseason_total(snow) == Decimal("4.0")

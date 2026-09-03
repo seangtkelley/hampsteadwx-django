@@ -127,7 +127,7 @@ class SnowSeason(models.Model):
     mar = models.DecimalField(max_digits=8, decimal_places=3)
     apr = models.DecimalField(max_digits=8, decimal_places=3)
     may = models.DecimalField(max_digits=8, decimal_places=3)
-    total = models.DecimalField(max_digits=8, decimal_places=1)
+    total = models.DecimalField(max_digits=8, decimal_places=3)
 
 
 class PeakFoliage(models.Model):

@@ -7,6 +7,7 @@ import pytest
 
 from api.models import AnnualSummary, DailyOb, MonthlySummary, SnowSeason
 from api.utils import calc_annual_summary, calc_monthly_summary
+from boilerplate.settings import TRACE_VAL
 from tests.integration.conftest import make_daily_ob, make_daily_obs_for_month
 
 pytestmark = [pytest.mark.integration, pytest.mark.django_db]
@@ -54,3 +55,17 @@ def test_sf_todate_cross_year_with_db() -> None:
     summary = calc_monthly_summary(2020, 1, save_to_db=False)
     assert isinstance(summary, dict)
     assert summary["sf_todate"] == Decimal("7.0")
+
+
+def test_snowseason_trace_total_persists_with_db_roundtrip() -> None:
+    """Trace-only snowfall months persist as TRACE, not rounded to 0.0."""
+    make_daily_ob(date(2024, 10, 28), snowfall=TRACE_VAL, snowdepth=TRACE_VAL)
+    calc_monthly_summary(2024, 10, save_to_db=True)
+
+    make_daily_ob(date(2024, 11, 23), snowfall=TRACE_VAL, snowdepth=TRACE_VAL)
+    calc_monthly_summary(2024, 11, save_to_db=True)
+
+    season = SnowSeason.objects.get(season="2024-2025")
+    assert season.oct == TRACE_VAL
+    assert season.nov == TRACE_VAL
+    assert season.total == TRACE_VAL

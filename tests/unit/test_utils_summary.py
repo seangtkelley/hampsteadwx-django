@@ -117,35 +117,78 @@ def test_calc_general_summary_trace_only_precip_and_snow() -> None:
     assert summary["precip_grtrT"] == 1
 
 
-def test_calc_general_summary_excludes_traces_from_sum() -> None:
+def test_calc_general_summary_trace_only_after_to_numeric() -> None:
+    """Monthly path converts Decimals via pd.to_numeric; traces must not sum (#16)."""
     df = _obs_dataframe(
         [
             {
-                "date": date(2020, 1, 1),
-                "max_temp": 40.0,
-                "min_temp": 20.0,
-                "atob_temp": 30.0,
+                "date": date(2024, 10, 28),
+                "max_temp": 50.0,
+                "min_temp": 30.0,
+                "atob_temp": 40.0,
+                "precip": TRACE_VAL,
+                "snowfall": TRACE_VAL,
+                "snowdepth": TRACE_VAL,
+            },
+            {
+                "date": date(2024, 10, 29),
+                "max_temp": 50.0,
+                "min_temp": 30.0,
+                "atob_temp": 40.0,
                 "precip": TRACE_VAL,
                 "snowfall": TRACE_VAL,
                 "snowdepth": 0.0,
             },
-            {
-                "date": date(2020, 1, 2),
-                "max_temp": 40.0,
-                "min_temp": 20.0,
-                "atob_temp": 30.0,
-                "precip": Decimal("0.5"),
-                "snowfall": Decimal("2.0"),
-                "snowdepth": Decimal("3.0"),
-            },
         ]
     )
+    df[["max_temp", "min_temp", "atob_temp", "precip", "snowfall", "snowdepth"]] = df[
+        ["max_temp", "min_temp", "atob_temp", "precip", "snowfall", "snowdepth"]
+    ].apply(pd.to_numeric)
     summary = calc_general_summary(df)
+    assert summary["precip"] == TRACE_VAL
+    assert summary["sf"] == TRACE_VAL
+    assert summary["grtst_sf"] == TRACE_VAL
+    assert summary["grtst_sd"] == TRACE_VAL
+    assert summary["sf_grtrT"] == 2
+    assert summary["sd_grtrT"] == 1
+
+
+def test_calc_general_summary_excludes_traces_from_sum() -> None:
+    rows = [
+        {
+            "date": date(2020, 1, 1),
+            "max_temp": 40.0,
+            "min_temp": 20.0,
+            "atob_temp": 30.0,
+            "precip": TRACE_VAL,
+            "snowfall": TRACE_VAL,
+            "snowdepth": 0.0,
+        },
+        {
+            "date": date(2020, 1, 2),
+            "max_temp": 40.0,
+            "min_temp": 20.0,
+            "atob_temp": 30.0,
+            "precip": Decimal("0.5"),
+            "snowfall": Decimal("2.0"),
+            "snowdepth": Decimal("3.0"),
+        },
+    ]
+    summary = calc_general_summary(_obs_dataframe(rows))
     assert summary["precip"] == Decimal("0.5")
     assert summary["sf"] == Decimal("2.0")
     assert list(summary["grtst_precip_dates"]) == [date(2020, 1, 2)]
     assert summary["sf_grtr1"] == 1
     assert summary["sd_grtr3"] == 1
+
+    # Same data after monthly pd.to_numeric conversion
+    df = _obs_dataframe(rows)
+    df[["max_temp", "min_temp", "atob_temp", "precip", "snowfall", "snowdepth"]] = df[
+        ["max_temp", "min_temp", "atob_temp", "precip", "snowfall", "snowdepth"]
+    ].apply(pd.to_numeric)
+    summary_float = calc_general_summary(df)
+    assert summary_float["precip"] == Decimal("0.5")
+    assert summary_float["sf"] == Decimal("2.0")
 
 
 def test_calc_monthly_summary_no_data(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -192,7 +235,7 @@ def test_calc_monthly_summary_departures(monkeypatch: pytest.MonkeyPatch) -> Non
     assert summary["precip_todate"] == Decimal("2.0")
 
 
-def test_calc_monthly_summary_precip_todate_zero_when_only_traces(
+def test_calc_monthly_summary_precip_todate_trace_when_only_traces(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr("api.utils.get_normals", lambda _year: MOCK_NORMALS)
@@ -202,7 +245,39 @@ def test_calc_monthly_summary_precip_todate_zero_when_only_traces(
     )
     summary = calc_monthly_summary(2020, 1, save_to_db=False)
     assert isinstance(summary, dict)
-    assert summary["precip_todate"] == Decimal("0")
+    assert summary["precip_todate"] == TRACE_VAL
+
+
+def test_calc_monthly_summary_trace_only_snowfall_is_trace(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Oct 2024 reproduction: two T snowfall days must yield Total Snowfall Trace (#16)."""
+    monkeypatch.setattr("api.utils.get_normals", lambda _year: MOCK_NORMALS)
+    patch_daily_ob_objects(
+        monkeypatch,
+        [
+            fake_daily_row(
+                date(2024, 10, 28),
+                precip=TRACE_VAL,
+                snowfall=TRACE_VAL,
+                snowdepth=TRACE_VAL,
+            ),
+            fake_daily_row(
+                date(2024, 10, 29),
+                precip=TRACE_VAL,
+                snowfall=TRACE_VAL,
+                snowdepth="0",
+            ),
+        ],
+    )
+    summary = calc_monthly_summary(2024, 10, save_to_db=False)
+    assert isinstance(summary, dict)
+    assert summary["sf"] == TRACE_VAL
+    assert summary["grtst_sf"] == TRACE_VAL
+    assert summary["sf_grtrT"] == 2
+    assert summary["sd_grtrT"] == 1
+    assert summary["sf_todate"] == TRACE_VAL
+    assert summary["precip_todate"] == TRACE_VAL
 
 
 def test_calc_monthly_summary_sf_todate_oct(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -283,6 +358,38 @@ def test_calc_monthly_summary_save_creates_snowseason(
     assert result is monthly_manager.create.return_value
     snow_manager.get_or_create.assert_called_once()
     assert snow_manager.get_or_create.call_args.kwargs["season"] == "2020-2021"
+
+
+def test_calc_monthly_summary_save_snowseason_trace_total(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Trace-only months must not sum to 0.002 on the snow-season total."""
+    monkeypatch.setattr("api.utils.get_normals", lambda _year: MOCK_NORMALS)
+    patch_daily_ob_objects(
+        monkeypatch,
+        [fake_daily_row(date(2024, 11, 23), snowfall=TRACE_VAL)],
+    )
+
+    monthly_manager = MagicMock()
+    monthly_manager.filter.return_value.exists.return_value = False
+    monkeypatch.setattr("api.utils.models.MonthlySummary.objects", monthly_manager)
+
+    snow = MagicMock()
+    snow.oct = TRACE_VAL
+    snow.nov = Decimal("0")
+    snow.dec = Decimal("0")
+    snow.jan = Decimal("0")
+    snow.feb = Decimal("0")
+    snow.mar = Decimal("0")
+    snow.apr = Decimal("0")
+    snow.may = Decimal("0")
+    snow_manager = MagicMock()
+    snow_manager.get_or_create.return_value = (snow, True)
+    monkeypatch.setattr("api.utils.models.SnowSeason.objects", snow_manager)
+
+    calc_monthly_summary(2024, 11, save_to_db=True)
+    assert snow.nov == TRACE_VAL
+    assert snow.total == TRACE_VAL
 
 
 def test_calc_monthly_summary_save_jan_season_string(
