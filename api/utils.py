@@ -452,8 +452,8 @@ def calc_general_summary(df: pd.DataFrame) -> dict[str, object]:
             )
         ),
         # precip fields
-        # Compare via str->Decimal: monthly calc runs pd.to_numeric (float), and
-        # Decimal(0.001) != TRACE_VAL due to binary float artifacts (#16).
+        # Compare via str->Decimal so TRACE comparisons remain stable even if a
+        # pandas coercion path yields float values (Decimal(0.001) != TRACE_VAL).
         "precip": TRACE_VAL
         if _is_trace(df.precip.max())
         else _sum_excluding_traces(df.precip),
