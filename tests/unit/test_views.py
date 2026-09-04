@@ -203,11 +203,13 @@ def test_submit_wrong_password(
 
 @patch("api.views.render", side_effect=_ok)
 @patch("api.views.utils.calc_annual_summary")
+@patch("api.views.utils.recalc_dependent_monthly_summaries")
 @patch("api.views.utils.calc_monthly_summary")
 @patch("api.views.utils.process_csv", return_value=(2020, 1))
 def test_submit_happy_path(
     process_csv: MagicMock,
     calc_monthly: MagicMock,
+    recalc_dependent: MagicMock,
     calc_annual: MagicMock,
     mock_render: MagicMock,
     rf: RequestFactory,
@@ -222,6 +224,7 @@ def test_submit_happy_path(
     views.summaries_monthly_submit(request)
     process_csv.assert_called_once()
     calc_monthly.assert_called_once_with(2020, 1, save_to_db=True)
+    recalc_dependent.assert_called_once_with(2020, 1)
     calc_annual.assert_called_once_with(2020, save_to_db=True)
     ctx = _render_context(mock_render)
     assert any("successfully processed" in a["body"] for a in ctx["alerts"])
