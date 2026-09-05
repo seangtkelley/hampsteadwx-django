@@ -93,6 +93,9 @@ def summaries_monthly_submit(request: HttpRequest) -> HttpResponse:
                 # calculate and save summaries
                 try:
                     utils.calc_monthly_summary(year, month, save_to_db=True)
+                    # Later months' precip/snow to-date fields were snapshotted
+                    # when those summaries were saved; refresh any that exist.
+                    utils.recalc_dependent_monthly_summaries(year, month)
                     utils.calc_annual_summary(year, save_to_db=True)
                 except Exception as e:
                     payload = utils.add_alert(

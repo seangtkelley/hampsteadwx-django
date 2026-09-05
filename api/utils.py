@@ -110,6 +110,35 @@ def get_month_abbr(num: int) -> str:
     return date(1900, num, 1).strftime("%b").lower()
 
 
+def dependent_months_for_todate(year: int, month: int) -> list[tuple[int, int]]:
+    """Return later months whose to-date fields depend on ``year``/``month`` data.
+
+    Calendar YTD precip for later months in the same year must be refreshed when
+    an earlier month is (re)submitted. Seasonal snowfall to-date also spans into
+    Jan-May of the following year when the changed month is Oct-Dec.
+
+    Returns:
+        Ordered ``(year, month)`` pairs that may need recalculation.
+    """
+    pairs = [(year, m) for m in range(month + 1, 13)]
+    if month >= 10:
+        pairs.extend((year + 1, m) for m in range(1, 6))
+    return pairs
+
+
+def recalc_dependent_monthly_summaries(year: int, month: int) -> None:
+    """Recalculate existing later-month summaries after ``year``/``month`` changes.
+
+    Skips months with no stored ``MonthlySummary`` so out-of-order uploads do not
+    create empty summaries. Only refreshes rows that already exist.
+    """
+    for dep_year, dep_month in dependent_months_for_todate(year, month):
+        if models.MonthlySummary.objects.filter(
+            date__year=dep_year, date__month=dep_month
+        ).exists():
+            calc_monthly_summary(dep_year, dep_month, save_to_db=True)
+
+
 def create_alert(color: str, body: str) -> dict[str, str]:
     """Build a Bootstrap-style alert payload.
 

@@ -6,7 +6,11 @@ from decimal import Decimal
 import pytest
 
 from api.models import AnnualSummary, DailyOb, MonthlySummary, SnowSeason
-from api.utils import calc_annual_summary, calc_monthly_summary
+from api.utils import (
+    calc_annual_summary,
+    calc_monthly_summary,
+    recalc_dependent_monthly_summaries,
+)
 from boilerplate.settings import TRACE_VAL
 from tests.integration.conftest import make_daily_ob, make_daily_obs_for_month
 
@@ -69,3 +73,21 @@ def test_snowseason_trace_total_persists_with_db_roundtrip() -> None:
     assert season.oct == TRACE_VAL
     assert season.nov == TRACE_VAL
     assert season.total == TRACE_VAL
+
+
+def test_recalc_dependent_refreshes_later_month_precip_todate() -> None:
+    """Submitting an earlier month must fix later months' stale precip_todate."""
+    # October saved before September daily data exists → under-counted YTD
+    make_daily_obs_for_month(2025, 8, days=1, precip="1.00")
+    make_daily_obs_for_month(2025, 10, days=1, precip="3.00")
+    calc_monthly_summary(2025, 10, save_to_db=True)
+    oct_summary = MonthlySummary.objects.get(date__year=2025, date__month=10)
+    assert oct_summary.precip_todate == Decimal("4.00")
+
+    # September arrives later
+    make_daily_obs_for_month(2025, 9, days=1, precip="2.00")
+    calc_monthly_summary(2025, 9, save_to_db=True)
+    recalc_dependent_monthly_summaries(2025, 9)
+
+    oct_summary.refresh_from_db()
+    assert oct_summary.precip_todate == Decimal("6.00")
