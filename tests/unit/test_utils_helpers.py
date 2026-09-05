@@ -84,9 +84,7 @@ def test_recalc_dependent_monthly_summaries_only_existing(
         return result
 
     monthly_manager.filter.side_effect = filter_side_effect
-    monkeypatch.setattr(
-        "api.utils.models.MonthlySummary.objects", monthly_manager
-    )
+    monkeypatch.setattr("api.utils.models.MonthlySummary.objects", monthly_manager)
     monkeypatch.setattr("api.utils.calc_monthly_summary", fake_calc)
 
     recalc_dependent_monthly_summaries(2025, 9)
