@@ -75,6 +75,49 @@ def test_snowseason_trace_total_persists_with_db_roundtrip() -> None:
     assert season.total == TRACE_VAL
 
 
+def test_monthly_date_arrayfields_roundtrip_flat() -> None:
+    """Nested ArrayField(ArrayField(DateField())) columns store flat date lists.
+
+    calc_general_summary emits flat lists (e.g. ``max_temp_dates``), while the
+    model fields are declared as nested arrays. Postgres does not enforce the
+    declared dimensionality, so the flat shape survives a save/reload, which is
+    the shape the templates iterate over directly.
+    """
+    make_daily_ob(date(2020, 6, 1), max_temp="90.0", min_temp="60.0")
+    make_daily_ob(date(2020, 6, 2), max_temp="90.0", min_temp="55.0")
+    calc_monthly_summary(2020, 6, save_to_db=True)
+
+    summary = MonthlySummary.objects.get(date__year=2020, date__month=6)
+    assert summary.max_temp_dates == [date(2020, 6, 1), date(2020, 6, 2)]
+    assert summary.min_temp_dates == [date(2020, 6, 2)]
+
+
+def test_annual_date_arrayfields_roundtrip_flat() -> None:
+    """Same flat-list round-trip characterization for the annual path."""
+    make_daily_ob(date(2020, 6, 1), max_temp="90.0", min_temp="60.0")
+    make_daily_ob(date(2020, 6, 2), max_temp="90.0", min_temp="55.0")
+    calc_annual_summary(2020, save_to_db=True)
+
+    summary = AnnualSummary.objects.get(year=2020)
+    assert summary.max_temp_dates == [date(2020, 6, 1), date(2020, 6, 2)]
+    assert summary.min_temp_dates == [date(2020, 6, 2)]
+
+
+def test_monthly_and_annual_trace_precip_and_sf_persist_as_trace_val() -> None:
+    """TRACE-only precip/snowfall periods reload as TRACE_VAL, not 0 or float drift."""
+    make_daily_ob(date(2021, 3, 1), precip=TRACE_VAL, snowfall=TRACE_VAL)
+    calc_monthly_summary(2021, 3, save_to_db=True)
+
+    monthly = MonthlySummary.objects.get(date__year=2021, date__month=3)
+    assert monthly.precip == TRACE_VAL
+    assert monthly.sf == TRACE_VAL
+
+    calc_annual_summary(2021, save_to_db=True)
+    annual = AnnualSummary.objects.get(year=2021)
+    assert annual.precip == TRACE_VAL
+    assert annual.sf == TRACE_VAL
+
+
 def test_recalc_dependent_refreshes_later_month_precip_todate() -> None:
     """Submitting an earlier month must fix later months' stale precip_todate."""
     # October saved before September daily data exists → under-counted YTD
