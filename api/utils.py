@@ -253,31 +253,27 @@ def process_csv(filepath: str | Path) -> tuple[int, int]:
                 models.DailyOb.objects.filter(date=row["DATE"].date()).first(),
             )
             ob.csv_filepath = str(filepath)
-            ob.max_temp = Decimal(row["TX"])
-            ob.min_temp = Decimal(row["TN"])
-            ob.atob_temp = Decimal(row["TA"])
+            ob.max_temp = _to_dec(row["TX"])
+            ob.min_temp = _to_dec(row["TN"])
+            ob.atob_temp = _to_dec(row["TA"])
 
             # 0.001 for trace values
-            ob.precip = Decimal(TRACE_VAL) if row["PP"] == "T" else Decimal(row["PP"])
-            ob.snowfall = Decimal(TRACE_VAL) if row["SF"] == "T" else Decimal(row["SF"])
-            ob.snowdepth = (
-                Decimal(TRACE_VAL) if row["SD"] == "T" else Decimal(row["SD"])
-            )
+            ob.precip = TRACE_VAL if row["PP"] == "T" else _to_dec(row["PP"])
+            ob.snowfall = TRACE_VAL if row["SF"] == "T" else _to_dec(row["SF"])
+            ob.snowdepth = TRACE_VAL if row["SD"] == "T" else _to_dec(row["SD"])
 
             ob.save()
         else:
             ob = models.DailyOb(
                 date=row["DATE"].date(),
                 csv_filepath=str(filepath),
-                max_temp=Decimal(row["TX"]),
-                min_temp=Decimal(row["TN"]),
-                atob_temp=Decimal(row["TA"]),
+                max_temp=_to_dec(row["TX"]),
+                min_temp=_to_dec(row["TN"]),
+                atob_temp=_to_dec(row["TA"]),
                 # 0.001 for trace values
-                precip=Decimal(TRACE_VAL) if row["PP"] == "T" else Decimal(row["PP"]),
-                snowfall=Decimal(TRACE_VAL) if row["SF"] == "T" else Decimal(row["SF"]),
-                snowdepth=Decimal(TRACE_VAL)
-                if row["SD"] == "T"
-                else Decimal(row["SD"]),
+                precip=TRACE_VAL if row["PP"] == "T" else _to_dec(row["PP"]),
+                snowfall=TRACE_VAL if row["SF"] == "T" else _to_dec(row["SF"]),
+                snowdepth=TRACE_VAL if row["SD"] == "T" else _to_dec(row["SD"]),
             )
 
             ob.save()
