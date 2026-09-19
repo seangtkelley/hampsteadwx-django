@@ -51,13 +51,19 @@ def _is_trace(value: object) -> bool:
 def _sum_excluding_traces(series: pd.Series) -> Decimal:
     """Sum series values, omitting trace observations.
 
-    Uses string-based Decimal conversion so float columns produced by
-    ``pd.to_numeric`` still match ``TRACE_VAL`` correctly.
-
     Returns:
         Sum of non-trace values as Decimal (zero when none).
     """
     return sum((_to_dec(v) for v in series if not _is_trace(v)), ZERO)
+
+
+def _decimal_mean(series: pd.Series) -> Decimal:
+    """Average a Decimal-valued Series without routing through float.
+
+    Returns:
+        Arithmetic mean as Decimal.
+    """
+    return sum((_to_dec(v) for v in series), ZERO) / len(series)
 
 
 def _total_with_optional_trace(
@@ -292,11 +298,8 @@ def calc_monthly_summary(year: int, month: int, save_to_db: bool = False) -> obj
     if obs.count() == 0:
         return None
 
-    # convert to dataframe — keep precip/snow as Decimal (avoid float TRACE bugs)
+    # convert to dataframe — every field stays Decimal (avoid float precision drift)
     df = pd.DataFrame.from_records(obs.values())
-    df[["max_temp", "min_temp", "atob_temp"]] = df[
-        ["max_temp", "min_temp", "atob_temp"]
-    ].apply(pd.to_numeric)
 
     # calc general
     summary = calc_general_summary(df)
@@ -449,40 +452,26 @@ def calc_general_summary(df: pd.DataFrame) -> dict[str, object]:
     Returns:
         Shared summary fields derived from the observation dataframe.
     """
+    daily_mean = (df.max_temp + df.min_temp).apply(_to_dec) / 2
+
     return {
         # temp fields
-        "max_temp": Decimal(df.max_temp.max()),
+        "max_temp": _to_dec(df.max_temp.max()),
         "max_temp_dates": list(df[df.max_temp == df.max_temp.max()].date),
-        "max_temp_avg": Decimal(df.max_temp.mean()),
-        "max_temp_grtr90_count": len(df[df.max_temp >= 90]),
-        "max_temp_less32_count": len(df[df.max_temp <= 32]),
-        "min_temp": Decimal(df.min_temp.min()),
+        "max_temp_avg": _decimal_mean(df.max_temp),
+        "max_temp_grtr90_count": len(df[df.max_temp >= Decimal("90")]),
+        "max_temp_less32_count": len(df[df.max_temp <= Decimal("32")]),
+        "min_temp": _to_dec(df.min_temp.min()),
         "min_temp_dates": list(df[df.min_temp == df.min_temp.min()].date),
-        "min_temp_avg": Decimal(df.min_temp.mean()),
-        "min_temp_less32_count": len(df[df.min_temp <= 32]),
-        "min_temp_less0_count": len(df[df.min_temp <= 0]),
-        "avg_temp": Decimal(df[["max_temp", "min_temp"]].mean(axis=1).mean()),
-        "hdd_count": abs(
-            round(
-                sum(
-                    df[(df[["max_temp", "min_temp"]].mean(axis=1)) < 65][
-                        ["max_temp", "min_temp"]
-                    ].mean(axis=1)
-                    - 65
-                )
-            )
-        ),
-        "cdd_count": round(
-            sum(
-                df[(df[["max_temp", "min_temp"]].mean(axis=1)) > 65][
-                    ["max_temp", "min_temp"]
-                ].mean(axis=1)
-                - 65
-            )
-        ),
+        "min_temp_avg": _decimal_mean(df.min_temp),
+        "min_temp_less32_count": len(df[df.min_temp <= Decimal("32")]),
+        "min_temp_less0_count": len(df[df.min_temp <= Decimal("0")]),
+        "avg_temp": _decimal_mean(daily_mean),
+        "hdd_count": round(sum(Decimal("65") - t for t in daily_mean if t < 65)),
+        "cdd_count": round(sum(t - Decimal("65") for t in daily_mean if t > 65)),
         # precip fields
-        # Compare via str->Decimal so TRACE comparisons remain stable even if a
-        # pandas coercion path yields float values (Decimal(0.001) != TRACE_VAL).
+        # Compare via str->Decimal so TRACE comparisons remain stable regardless of
+        # the column's pandas dtype (Decimal(0.001) != TRACE_VAL).
         "precip": TRACE_VAL
         if _is_trace(df.precip.max())
         else _sum_excluding_traces(df.precip),
@@ -493,10 +482,10 @@ def calc_general_summary(df: pd.DataFrame) -> dict[str, object]:
         if df.precip.max() == 0
         else list(df[df.precip == df.precip.max()].date),
         "precip_grtrT": len(df[df.precip >= TRACE_VAL]),  # trace (T)
-        "precip_grtr01": len(df[df.precip >= 0.01000]),  # 01 = 0.01"
-        "precip_grtr10": len(df[df.precip >= 0.10000]),  # 10 = 0.10"
-        "precip_grtr50": len(df[df.precip >= 0.50000]),
-        "precip_grtr100": len(df[df.precip >= 1]),
+        "precip_grtr01": len(df[df.precip >= Decimal("0.01")]),  # 01 = 0.01"
+        "precip_grtr10": len(df[df.precip >= Decimal("0.10")]),  # 10 = 0.10"
+        "precip_grtr50": len(df[df.precip >= Decimal("0.50")]),
+        "precip_grtr100": len(df[df.precip >= Decimal("1")]),
         # snowfall and snowdepth fields
         "sf": TRACE_VAL
         if _is_trace(df.snowfall.max())
@@ -508,11 +497,11 @@ def calc_general_summary(df: pd.DataFrame) -> dict[str, object]:
         if df.snowfall.max() == 0
         else list(df[df.snowfall == df.snowfall.max()].date),
         "sf_grtrT": len(df[df.snowfall >= TRACE_VAL]),
-        "sf_grtr1": len(df[df.snowfall >= 1]),  # in.
-        "sf_grtr3": len(df[df.snowfall >= 3]),
-        "sf_grtr6": len(df[df.snowfall >= 6]),
-        "sf_grtr12": len(df[df.snowfall >= 12]),
-        "sf_grtr18": len(df[df.snowfall >= 18]),
+        "sf_grtr1": len(df[df.snowfall >= Decimal("1")]),  # in.
+        "sf_grtr3": len(df[df.snowfall >= Decimal("3")]),
+        "sf_grtr6": len(df[df.snowfall >= Decimal("6")]),
+        "sf_grtr12": len(df[df.snowfall >= Decimal("12")]),
+        "sf_grtr18": len(df[df.snowfall >= Decimal("18")]),
         "grtst_sd": TRACE_VAL
         if _is_trace(df.snowdepth.max())
         else _to_dec(df.snowdepth.max()),
@@ -520,9 +509,9 @@ def calc_general_summary(df: pd.DataFrame) -> dict[str, object]:
         if df.snowdepth.max() == 0
         else list(df[df.snowdepth == df.snowdepth.max()].date),
         "sd_grtrT": len(df[df.snowdepth >= TRACE_VAL]),
-        "sd_grtr1": len(df[df.snowdepth >= 1]),  # in.
-        "sd_grtr3": len(df[df.snowdepth >= 3]),
-        "sd_grtr6": len(df[df.snowdepth >= 6]),
-        "sd_grtr12": len(df[df.snowdepth >= 12]),
-        "sd_grtr18": len(df[df.snowdepth >= 18]),
+        "sd_grtr1": len(df[df.snowdepth >= Decimal("1")]),  # in.
+        "sd_grtr3": len(df[df.snowdepth >= Decimal("3")]),
+        "sd_grtr6": len(df[df.snowdepth >= Decimal("6")]),
+        "sd_grtr12": len(df[df.snowdepth >= Decimal("12")]),
+        "sd_grtr18": len(df[df.snowdepth >= Decimal("18")]),
     }
