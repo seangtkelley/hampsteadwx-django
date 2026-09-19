@@ -11,7 +11,8 @@ from django.test import Client
 from django.urls import reverse
 
 from api.models import MonthlySummary
-from tests.integration.conftest import make_daily_obs_for_month
+from api.utils import calc_annual_summary, calc_monthly_summary
+from tests.integration.conftest import make_daily_ob, make_daily_obs_for_month
 
 pytestmark = [pytest.mark.integration, pytest.mark.django_db]
 
@@ -102,3 +103,27 @@ def test_list_and_annual_pages(
     assert client.get(reverse("summaries_peakfoliage_view")).status_code == 200
     assert client.get(reverse("summaries_sunsetlake_view")).status_code == 200
     assert client.get(reverse("summaries_precip_view")).status_code == 200
+
+
+def test_monthly_text_view_renders_formatted_dates(client: Client) -> None:
+    """Monthly text view must render actual dates, not just return 200."""
+    make_daily_ob(date(2022, 4, 7), max_temp="80.0", min_temp="60.0")
+    calc_monthly_summary(2022, 4, save_to_db=True)
+
+    response = client.get(
+        reverse("summaries_monthly_text", kwargs={"year": 2022, "month": 4})
+    )
+    assert response.status_code == 200
+    assert response.context["monthly_summary"].max_temp_dates == [date(2022, 4, 7)]
+    assert b"04/07/2022" in response.content
+
+
+def test_annual_text_view_renders_formatted_dates(client: Client) -> None:
+    """Annual text view must render actual dates, not just return 200."""
+    make_daily_ob(date(2022, 4, 7), max_temp="80.0", min_temp="60.0")
+    calc_annual_summary(2022, save_to_db=True)
+
+    response = client.get(reverse("summaries_annual_text", kwargs={"year": 2022}))
+    assert response.status_code == 200
+    assert response.context["annual_summary"].max_temp_dates == [date(2022, 4, 7)]
+    assert b"04/07/2022" in response.content
