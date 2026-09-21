@@ -3,23 +3,22 @@ name = "hampsteadwx-django"
 version = "2.5.0"
 description = "Cooperative climatological data explorer for Hampstead, NH weather summaries."
 readme = "README.md"
-requires-python = ">=3.10,<3.11"
+requires-python = ">=3.14,<3.15"
 dependencies = [
-    "asgiref~=3.5.0",
-    "dj-database-url~=0.5.0",
-    "Django~=4.0.3",
+    "dj-database-url~=3.1",
+    "Django~=6.1",
     "gunicorn~=23.0",
-    "numpy~=1.22.2",
-    "pandas~=1.4.1",
-    "psycopg2-binary~=2.9.3",
-    "tqdm~=4.64.0",
-    "whitenoise~=6.0.0",
+    "numpy~=2.0",
+    "pandas~=3.0",
+    "psycopg[binary]~=3.2",
+    "tqdm~=4.67",
+    "whitenoise~=6.11",
 ]
 
 [dependency-groups]
 dev = [
     "coverage>=7.0",
-    "django-stubs[compatible-mypy]>=4.2",
+    "django-stubs[compatible-mypy]>=5.2",
     "pytest>=8.0",
     "pytest-cov>=5.0",
     "pytest-django>=4.8",
@@ -55,7 +54,7 @@ fail_under = 90
 default-groups = ["dev"]
 
 [tool.ruff]
-target-version = "py310"
+target-version = "py314"
 line-length = 88
 exclude = [
     ".venv",
@@ -120,7 +119,7 @@ line-ending = "auto"
 docstring-code-format = true
 
 [tool.ty.environment]
-python-version = "3.10"
+python-version = "3.14"
 
 [tool.ty.src]
 include = ["api", "boilerplate", "manage.py"]

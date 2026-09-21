@@ -27,10 +27,10 @@ Production: [hampsteadwx-django.herokuapp.com](http://hampsteadwx-django.herokua
 | Tool | Notes |
 |------|--------|
 | [uv](https://docs.astral.sh/uv/) | Python version and virtualenv management |
-| PostgreSQL 14+ | **Required** to run the app and **integration** tests (ArrayField). Unit tests mock the ORM and do not query Postgres. |
+| PostgreSQL 15+ | **Required** to run the app and **integration** tests (ArrayField). Django 6.1 requires PostgreSQL 15 or later. Unit tests mock the ORM and do not query Postgres. |
 | [Heroku CLI](https://devcenter.heroku.com/articles/heroku-cli) | Optional; needed to pull production data |
 
-Python **3.10.9** is pinned in `.python-version` and `runtime.txt`. Match that locally to stay aligned with Heroku.
+Python **3.14** is pinned in `.python-version`. Match that locally to stay aligned with Heroku.
 
 ### Database: PostgreSQL required
 
@@ -48,7 +48,7 @@ source .venv/bin/activate   # Windows: .venv\Scripts\activate
 
 Dependencies are declared in `pyproject.toml`. `uv sync` installs runtime and **dev** dependencies (Ruff, ty, pytest, pytest-django, pytest-cov) from the lockfile.
 
-If `uv sync` fails building `psycopg2`, install PostgreSQL client libraries locally (e.g. `brew install libpq` and ensure `pg_config` is on your `PATH`).
+`psycopg[binary]` ships prebuilt wheels, so no local PostgreSQL client libraries are required to install dependencies.
 
 ### 2. Local PostgreSQL
 
@@ -262,7 +262,7 @@ heroku pg:info -a hampsteadwx-django
 This repo is set up for Heroku buildpack deployment:
 
 - `Procfile` — release phase (migrations) and Gunicorn WSGI server
-- `runtime.txt` — Python version
+- `.python-version` — Python version (the Heroku Python buildpack reads this directly)
 - `pyproject.toml` — project metadata, version, and dependencies (source of truth)
 - `uv.lock` — locked dependencies for Heroku (the buildpack runs `uv sync --no-default-groups`, so dev deps are excluded in production)
 
