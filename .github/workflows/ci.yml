@@ -41,6 +41,15 @@ jobs:
       - name: Type check
         run: uv run ty check
 
+      - name: Django system checks
+        run: uv run python manage.py check
+
+      - name: Verify no missing migrations
+        run: uv run python manage.py makemigrations --check --dry-run
+
+      - name: Verify static files collect cleanly
+        run: uv run python manage.py collectstatic --noinput
+
   unit-tests:
     name: Unit tests
     runs-on: ubuntu-latest

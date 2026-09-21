@@ -60,6 +60,48 @@ def test_get_normals_modern_2022_plus(normals_root: Path) -> None:
     )
 
 
+def test_get_normals_annual_temp_mean_avoids_float_drift(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The annual temp normal is the Decimal-exact mean, not a float-drifted one.
+
+    These 12 values average to exactly 35.25, a tie at the rounding boundary.
+    Decimal round-half-to-even gives 35.2; summing/averaging in float64 first
+    nudges the tie just past .25, rounding (incorrectly) up to 35.3.
+    """
+    csv_dir = tmp_path / "static" / "csv"
+    csv_dir.mkdir(parents=True)
+    monthly_temps = [
+        "84.1",
+        "65.2",
+        "76.9",
+        "37.2",
+        "-3.9",
+        "-8.1",
+        "11.3",
+        "47.3",
+        "4.5",
+        "76.6",
+        "-29.4",
+        "61.3",
+    ]
+    header = (
+        "STATION,DATE,MLY-PRCP-NORMAL,MLY-SNOW-NORMAL,MLY-TAVG-NORMAL,"
+        "MLY-TMAX-NORMAL,MLY-TMIN-NORMAL\n"
+    )
+    rows = "\n".join(
+        f'X,"{m:02d}",1.0,1.0,{temp},30.0,10.0'
+        for m, temp in enumerate(monthly_temps, start=1)
+    )
+    (csv_dir / "normals-monthly-1991-2020-2022-01-23T16-24-36.csv").write_text(
+        header + rows + "\n"
+    )
+    monkeypatch.setattr("api.utils.BASE_DIR", tmp_path)
+
+    normals = get_normals(2022)
+    assert normals["temp"][12] == Decimal("35.2")
+
+
 def test_numeric_series_to_decimals_rejects_nan() -> None:
     series = pd.to_numeric(pd.Series(["1.0", "bad", "3.0"]), errors="coerce")
     with pytest.raises(ValueError, match="Invalid numeric values"):

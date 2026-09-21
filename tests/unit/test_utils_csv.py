@@ -59,6 +59,31 @@ def test_process_csv_inserts_and_maps_trace(
         inst.save.assert_called_once()
 
 
+def test_process_csv_all_numeric_column_no_trace_values(
+    sample_csv_no_trace_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """When a PP/SF/SD column has zero "T" values, pandas infers numeric dtype.
+
+    Every other fixture mixes "T" with numerics in the same column, forcing
+    object/string dtype so ``Decimal(row["PP"])`` always receives a Python
+    ``str``. An all-numeric column hands back a numpy scalar instead, which
+    must still convert to the expected Decimal value without drift (#36).
+    """
+    _, created, _ = _patch_daily_ob(monkeypatch, exists=False)
+
+    year, month = process_csv(sample_csv_no_trace_path)
+    assert (year, month) == (2020, 2)
+    assert len(created) == 3
+    assert created[0].precip == Decimal("0.10")
+    assert created[1].precip == Decimal("0.05")
+    assert created[1].snowfall == Decimal("0.2")
+    assert created[2].snowdepth == Decimal("1.0")
+    for inst in created:
+        assert inst.precip != TRACE_VAL
+        assert inst.snowfall != TRACE_VAL
+        assert inst.snowdepth != TRACE_VAL
+
+
 def test_process_csv_updates_existing(
     write_csv, monkeypatch: pytest.MonkeyPatch
 ) -> None:

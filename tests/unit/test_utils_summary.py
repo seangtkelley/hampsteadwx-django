@@ -28,33 +28,9 @@ def _obs_dataframe(rows: list[dict]) -> pd.DataFrame:
 def test_calc_general_summary_temps_and_ties() -> None:
     df = _obs_dataframe(
         [
-            {
-                "date": date(2020, 1, 1),
-                "max_temp": 90.0,
-                "min_temp": 10.0,
-                "atob_temp": 50.0,
-                "precip": 0.0,
-                "snowfall": 0.0,
-                "snowdepth": 0.0,
-            },
-            {
-                "date": date(2020, 1, 2),
-                "max_temp": 90.0,
-                "min_temp": 10.0,
-                "atob_temp": 50.0,
-                "precip": 0.0,
-                "snowfall": 0.0,
-                "snowdepth": 0.0,
-            },
-            {
-                "date": date(2020, 1, 3),
-                "max_temp": 30.0,
-                "min_temp": -5.0,
-                "atob_temp": 12.0,
-                "precip": 0.0,
-                "snowfall": 0.0,
-                "snowdepth": 0.0,
-            },
+            fake_daily_row(date(2020, 1, 1), max_temp="90.0", min_temp="10.0"),
+            fake_daily_row(date(2020, 1, 2), max_temp="90.0", min_temp="10.0"),
+            fake_daily_row(date(2020, 1, 3), max_temp="30.0", min_temp="-5.0"),
         ]
     )
     summary = calc_general_summary(df)
@@ -72,43 +48,122 @@ def test_calc_general_summary_temps_and_ties() -> None:
 def test_calc_general_summary_hdd_cdd() -> None:
     df = _obs_dataframe(
         [
-            {
-                "date": date(2020, 7, 1),
-                "max_temp": 50.0,
-                "min_temp": 40.0,
-                "atob_temp": 45.0,
-                "precip": 0.0,
-                "snowfall": 0.0,
-                "snowdepth": 0.0,
-            },
-            {
-                "date": date(2020, 7, 2),
-                "max_temp": 80.0,
-                "min_temp": 70.0,
-                "atob_temp": 75.0,
-                "precip": 0.0,
-                "snowfall": 0.0,
-                "snowdepth": 0.0,
-            },
+            fake_daily_row(date(2020, 7, 1), max_temp="50.0", min_temp="40.0"),
+            fake_daily_row(date(2020, 7, 2), max_temp="80.0", min_temp="70.0"),
         ]
     )
     summary = calc_general_summary(df)
     assert summary["hdd_count"] == 20
     assert summary["cdd_count"] == 10
+    assert isinstance(summary["max_temp_avg"], Decimal)
+    assert summary["max_temp_avg"] == Decimal("65")
+    assert isinstance(summary["avg_temp"], Decimal)
+    assert summary["avg_temp"] == Decimal("60")
+
+
+@pytest.mark.parametrize(
+    ("max_temp", "min_temp", "field", "expected"),
+    [
+        # mean 59.5, diff from 65 is 5.5 -> banker's rounding to nearest even (6)
+        ("70.0", "49.0", "hdd_count", 6),
+        # mean 60.5, diff from 65 is 4.5 -> rounds down to nearest even (4)
+        ("71.0", "50.0", "hdd_count", 4),
+        # mean 65.5, diff from 65 is 0.5 -> rounds down to nearest even (0)
+        ("81.0", "50.0", "cdd_count", 0),
+        # mean 66.5, diff from 65 is 1.5 -> rounds up to nearest even (2)
+        ("83.0", "50.0", "cdd_count", 2),
+    ],
+)
+def test_calc_general_summary_hdd_cdd_uses_banker_rounding(
+    max_temp: str, min_temp: str, field: str, expected: int
+) -> None:
+    """round() on the summed Decimal diff is round-half-to-even, not half-up.
+
+    Locks in the exact rounding behavior so a future change to how hdd/cdd are
+    accumulated (e.g. per-day rounding, or a switch away from round()) doesn't
+    silently shift totals for these boundary means.
+    """
+    df = _obs_dataframe(
+        [fake_daily_row(date(2020, 1, 1), max_temp=max_temp, min_temp=min_temp)]
+    )
+    summary = calc_general_summary(df)
+    assert summary[field] == expected
+
+
+def test_calc_general_summary_hdd_cdd_boundary_at_exactly_65() -> None:
+    """A day with mean temp exactly 65 counts toward neither hdd nor cdd."""
+    df = _obs_dataframe(
+        [fake_daily_row(date(2020, 5, 1), max_temp="70.0", min_temp="60.0")]
+    )
+    summary = calc_general_summary(df)
+    assert summary["hdd_count"] == 0
+    assert summary["cdd_count"] == 0
+
+
+def test_calc_general_summary_precip_sum_has_no_float_drift() -> None:
+    """0.1 + 0.2 + 0.3 is 0.30000000000000004 in binary float; must be exact here."""
+    df = _obs_dataframe(
+        [
+            fake_daily_row(date(2020, 1, 1), precip="0.1"),
+            fake_daily_row(date(2020, 1, 2), precip="0.2"),
+            fake_daily_row(date(2020, 1, 3), precip="0.3"),
+        ]
+    )
+    summary = calc_general_summary(df)
+    assert summary["precip"] == Decimal("0.6")
+
+
+def test_calc_general_summary_avg_temp_keeps_precision_past_one_decimal() -> None:
+    """Averages that don't terminate at 1 decimal place must not be truncated.
+
+    ``max_temp_avg``/``avg_temp`` are only rounded once they hit the
+    DecimalField on save; calc_general_summary itself should return the full
+    precision average.
+    """
+    df = _obs_dataframe(
+        [
+            fake_daily_row(date(2020, 1, 1), max_temp="10.0", min_temp="10.0"),
+            fake_daily_row(date(2020, 1, 2), max_temp="10.0", min_temp="10.0"),
+            fake_daily_row(date(2020, 1, 3), max_temp="11.0", min_temp="11.0"),
+        ]
+    )
+    summary = calc_general_summary(df)
+    expected = Decimal("31") / 3
+    assert summary["max_temp_avg"] == expected
+    assert summary["avg_temp"] == expected
+
+
+def test_calc_general_summary_ties_for_greatest_precip_sf_sd() -> None:
+    """Multi-day ties for the greatest precip/sf/sd must list every tied date."""
+    df = _obs_dataframe(
+        [
+            fake_daily_row(
+                date(2020, 1, 1), precip="0.5", snowfall="3.0", snowdepth="4.0"
+            ),
+            fake_daily_row(
+                date(2020, 1, 2), precip="0.5", snowfall="3.0", snowdepth="4.0"
+            ),
+            fake_daily_row(
+                date(2020, 1, 3), precip="0.2", snowfall="1.0", snowdepth="1.0"
+            ),
+        ]
+    )
+    summary = calc_general_summary(df)
+    tied_dates = [date(2020, 1, 1), date(2020, 1, 2)]
+    assert list(summary["grtst_precip_dates"]) == tied_dates
+    assert list(summary["grtst_sf_dates"]) == tied_dates
+    assert list(summary["grtst_sd_dates"]) == tied_dates
 
 
 def test_calc_general_summary_trace_only_precip_and_snow() -> None:
     df = _obs_dataframe(
         [
-            {
-                "date": date(2020, 1, 1),
-                "max_temp": 40.0,
-                "min_temp": 20.0,
-                "atob_temp": 30.0,
-                "precip": TRACE_VAL,
-                "snowfall": TRACE_VAL,
-                "snowdepth": TRACE_VAL,
-            }
+            fake_daily_row(
+                date(2020, 1, 1),
+                precip=TRACE_VAL,
+                snowfall=TRACE_VAL,
+                snowdepth=TRACE_VAL,
+            )
         ]
     )
     summary = calc_general_summary(df)
@@ -117,33 +172,24 @@ def test_calc_general_summary_trace_only_precip_and_snow() -> None:
     assert summary["precip_grtrT"] == 1
 
 
-def test_calc_general_summary_trace_only_after_to_numeric() -> None:
-    """Monthly path converts Decimals via pd.to_numeric; traces must not sum (#16)."""
+def test_calc_general_summary_trace_only_does_not_sum_to_float_drift() -> None:
+    """Two T snowfall/precip days must yield Trace totals, not float drift (#16)."""
     df = _obs_dataframe(
         [
-            {
-                "date": date(2024, 10, 28),
-                "max_temp": 50.0,
-                "min_temp": 30.0,
-                "atob_temp": 40.0,
-                "precip": TRACE_VAL,
-                "snowfall": TRACE_VAL,
-                "snowdepth": TRACE_VAL,
-            },
-            {
-                "date": date(2024, 10, 29),
-                "max_temp": 50.0,
-                "min_temp": 30.0,
-                "atob_temp": 40.0,
-                "precip": TRACE_VAL,
-                "snowfall": TRACE_VAL,
-                "snowdepth": 0.0,
-            },
+            fake_daily_row(
+                date(2024, 10, 28),
+                precip=TRACE_VAL,
+                snowfall=TRACE_VAL,
+                snowdepth=TRACE_VAL,
+            ),
+            fake_daily_row(
+                date(2024, 10, 29),
+                precip=TRACE_VAL,
+                snowfall=TRACE_VAL,
+                snowdepth="0",
+            ),
         ]
     )
-    df[["max_temp", "min_temp", "atob_temp", "precip", "snowfall", "snowdepth"]] = df[
-        ["max_temp", "min_temp", "atob_temp", "precip", "snowfall", "snowdepth"]
-    ].apply(pd.to_numeric)
     summary = calc_general_summary(df)
     assert summary["precip"] == TRACE_VAL
     assert summary["sf"] == TRACE_VAL
@@ -154,41 +200,65 @@ def test_calc_general_summary_trace_only_after_to_numeric() -> None:
 
 
 def test_calc_general_summary_excludes_traces_from_sum() -> None:
-    rows = [
-        {
-            "date": date(2020, 1, 1),
-            "max_temp": 40.0,
-            "min_temp": 20.0,
-            "atob_temp": 30.0,
-            "precip": TRACE_VAL,
-            "snowfall": TRACE_VAL,
-            "snowdepth": 0.0,
-        },
-        {
-            "date": date(2020, 1, 2),
-            "max_temp": 40.0,
-            "min_temp": 20.0,
-            "atob_temp": 30.0,
-            "precip": Decimal("0.5"),
-            "snowfall": Decimal("2.0"),
-            "snowdepth": Decimal("3.0"),
-        },
-    ]
-    summary = calc_general_summary(_obs_dataframe(rows))
+    df = _obs_dataframe(
+        [
+            fake_daily_row(
+                date(2020, 1, 1), precip=TRACE_VAL, snowfall=TRACE_VAL, snowdepth="0"
+            ),
+            fake_daily_row(
+                date(2020, 1, 2), precip="0.5", snowfall="2.0", snowdepth="3.0"
+            ),
+        ]
+    )
+    summary = calc_general_summary(df)
     assert summary["precip"] == Decimal("0.5")
     assert summary["sf"] == Decimal("2.0")
     assert list(summary["grtst_precip_dates"]) == [date(2020, 1, 2)]
     assert summary["sf_grtr1"] == 1
     assert summary["sd_grtr3"] == 1
 
-    # Same data after monthly pd.to_numeric conversion
-    df = _obs_dataframe(rows)
-    df[["max_temp", "min_temp", "atob_temp", "precip", "snowfall", "snowdepth"]] = df[
-        ["max_temp", "min_temp", "atob_temp", "precip", "snowfall", "snowdepth"]
-    ].apply(pd.to_numeric)
-    summary_float = calc_general_summary(df)
-    assert summary_float["precip"] == Decimal("0.5")
-    assert summary_float["sf"] == Decimal("2.0")
+
+def test_calc_general_summary_handles_float_dtype_frame() -> None:
+    """calc_general_summary must still tolerate a float64 frame defensively."""
+    df = _obs_dataframe(
+        [
+            {
+                "date": date(2020, 1, 1),
+                "max_temp": 40.0,
+                "min_temp": 20.0,
+                "atob_temp": 30.0,
+                "precip": 0.5,
+                "snowfall": 2.0,
+                "snowdepth": 3.0,
+            }
+        ]
+    )
+    summary = calc_general_summary(df)
+    assert summary["precip"] == Decimal("0.5")
+    assert summary["sf"] == Decimal("2.0")
+
+
+def test_calc_general_summary_daily_mean_converts_before_adding() -> None:
+    """max_temp/min_temp must convert to Decimal before summing, not after.
+
+    0.1 + 0.2 in binary float is 0.30000000000000004; converting each side to
+    Decimal first (via str) avoids that, but converting only the sum would not.
+    """
+    df = _obs_dataframe(
+        [
+            {
+                "date": date(2020, 1, 1),
+                "max_temp": 0.1,
+                "min_temp": 0.2,
+                "atob_temp": 0.15,
+                "precip": 0.0,
+                "snowfall": 0.0,
+                "snowdepth": 0.0,
+            }
+        ]
+    )
+    summary = calc_general_summary(df)
+    assert summary["avg_temp"] == Decimal("0.15")
 
 
 def test_calc_monthly_summary_no_data(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -233,6 +303,24 @@ def test_calc_monthly_summary_departures(monkeypatch: pytest.MonkeyPatch) -> Non
         == Decimal(str(summary["avg_temp"])) - MOCK_NORMALS["temp"][0]
     )
     assert summary["precip_todate"] == Decimal("2.0")
+
+
+def test_calc_monthly_summary_precip_todate_avoids_float_drift(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Ten 0.1" days must sum to exactly 1.0, not a float-accumulated 0.9999...9.
+
+    Exercises the same Decimal summation path calc_monthly_summary feeds into
+    both ``precip`` (per-month) and ``precip_todate`` (cumulative), not just
+    calc_general_summary in isolation.
+    """
+    monkeypatch.setattr("api.utils.get_normals", lambda _year: MOCK_NORMALS)
+    rows = [fake_daily_row(date(2020, 1, i + 1), precip="0.1") for i in range(10)]
+    patch_daily_ob_objects(monkeypatch, rows)
+    summary = calc_monthly_summary(2020, 1, save_to_db=False)
+    assert isinstance(summary, dict)
+    assert summary["precip"] == Decimal("1.0")
+    assert summary["precip_todate"] == Decimal("1.0")
 
 
 def test_calc_monthly_summary_precip_todate_trace_when_only_traces(

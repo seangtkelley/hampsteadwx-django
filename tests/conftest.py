@@ -17,6 +17,7 @@ os.environ.setdefault(
 
 FIXTURES_DIR = Path(__file__).resolve().parent / "fixtures"
 SAMPLE_CSV = FIXTURES_DIR / "sample_daily.csv"
+SAMPLE_CSV_NO_TRACE = FIXTURES_DIR / "sample_daily_no_trace.csv"
 
 
 def pytest_configure(config: pytest.Config) -> None:
@@ -53,6 +54,12 @@ def site_pass(monkeypatch: pytest.MonkeyPatch) -> str:
 def sample_csv_path() -> Path:
     """Path to the checked-in sample daily observation CSV."""
     return SAMPLE_CSV
+
+
+@pytest.fixture
+def sample_csv_no_trace_path() -> Path:
+    """Path to a sample CSV with no "T" values, so PP/SF/SD infer numeric dtype."""
+    return SAMPLE_CSV_NO_TRACE
 
 
 def _empty_date_arrays() -> dict[str, list]:
