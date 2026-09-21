@@ -66,7 +66,7 @@ def iloc(items: Iterable[Any] | Sequence[Any], index: object) -> object:
     """
     try:
         return cast(Sequence[Any], items)[int(str(index))]
-    except (IndexError, TypeError, ValueError):
+    except IndexError, TypeError, ValueError:
         return None
 
 
