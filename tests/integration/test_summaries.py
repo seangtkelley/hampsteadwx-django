@@ -75,6 +75,34 @@ def test_snowseason_trace_total_persists_with_db_roundtrip() -> None:
     assert season.total == TRACE_VAL
 
 
+def test_monthly_avg_temp_db_rounding_is_half_up_not_truncated() -> None:
+    """A precise 10.25 average must round to 10.3 in the DecimalField(1), not 10.2.
+
+    Exercises the interaction between calc_general_summary's full-precision
+    Decimal average and Postgres's numeric(8,1) rounding on save. If a future
+    change reintroduced float coercion upstream, or truncated instead of
+    rounding, this exact-tie average would drift to 10.2 or another value.
+    """
+    make_daily_ob(date(2021, 7, 1), max_temp="10.0", min_temp="10.0")
+    make_daily_ob(date(2021, 7, 2), max_temp="10.5", min_temp="10.5")
+    calc_monthly_summary(2021, 7, save_to_db=True)
+
+    summary = MonthlySummary.objects.get(date__year=2021, date__month=7)
+    assert summary.max_temp_avg == Decimal("10.3")
+    assert summary.avg_temp == Decimal("10.3")
+
+
+def test_monthly_precip_todate_sums_many_tenths_without_float_drift() -> None:
+    """Ten real DB rows of 0.1" precip must sum to exactly 1.000 via SQL SUM."""
+    for day in range(1, 11):
+        make_daily_ob(date(2022, 5, day), precip="0.1")
+    calc_monthly_summary(2022, 5, save_to_db=True)
+
+    summary = MonthlySummary.objects.get(date__year=2022, date__month=5)
+    assert summary.precip == Decimal("1.000")
+    assert summary.precip_todate == Decimal("1.000")
+
+
 def test_monthly_date_arrayfields_roundtrip_flat() -> None:
     """Nested ArrayField(ArrayField(DateField())) columns store flat date lists.
 
