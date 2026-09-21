@@ -238,6 +238,29 @@ def test_calc_general_summary_handles_float_dtype_frame() -> None:
     assert summary["sf"] == Decimal("2.0")
 
 
+def test_calc_general_summary_daily_mean_converts_before_adding() -> None:
+    """max_temp/min_temp must convert to Decimal before summing, not after.
+
+    0.1 + 0.2 in binary float is 0.30000000000000004; converting each side to
+    Decimal first (via str) avoids that, but converting only the sum would not.
+    """
+    df = _obs_dataframe(
+        [
+            {
+                "date": date(2020, 1, 1),
+                "max_temp": 0.1,
+                "min_temp": 0.2,
+                "atob_temp": 0.15,
+                "precip": 0.0,
+                "snowfall": 0.0,
+                "snowdepth": 0.0,
+            }
+        ]
+    )
+    summary = calc_general_summary(df)
+    assert summary["avg_temp"] == Decimal("0.15")
+
+
 def test_calc_monthly_summary_no_data(monkeypatch: pytest.MonkeyPatch) -> None:
     patch_daily_ob_objects(monkeypatch, [])
     assert calc_monthly_summary(1999, 1) is None

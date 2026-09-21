@@ -448,7 +448,10 @@ def calc_general_summary(df: pd.DataFrame) -> dict[str, object]:
     Returns:
         Shared summary fields derived from the observation dataframe.
     """
-    daily_mean = (df.max_temp + df.min_temp).apply(_to_dec) / 2
+    # Convert each column to Decimal before adding, not after: adding first
+    # would do float arithmetic when the frame isn't already Decimal-typed,
+    # losing precision before _to_dec ever sees the result.
+    daily_mean = (df.max_temp.apply(_to_dec) + df.min_temp.apply(_to_dec)) / 2
 
     return {
         # temp fields
