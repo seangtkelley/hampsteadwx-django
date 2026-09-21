@@ -219,11 +219,16 @@ def get_normals(year: int) -> dict[str, list[Decimal]]:
         normals["sf"] = _numeric_series_to_decimals(sf, "MLY-SNOW-NORMAL")
 
         # Annual norms: temp is mean of months; precip/snow are yearly totals
-        # (matches HMPN3 convention used for years < 2022).
-        if not temp.empty:
-            normals["temp"].append(Decimal(str(round(temp.mean(), 1))))
-            normals["precip"].append(Decimal(str(round(precip.sum(), 2))))
-            normals["sf"].append(Decimal(str(round(sf.sum(), 1))))
+        # (matches HMPN3 convention used for years < 2022). Aggregated from the
+        # already-Decimal monthly values, not temp/precip/sf (float64), so the
+        # mean/sum itself never routes through float arithmetic.
+        if normals["temp"]:
+            annual_temp = sum(normals["temp"], ZERO) / len(normals["temp"])
+            normals["temp"].append(annual_temp.quantize(Decimal("0.1")))
+            normals["precip"].append(
+                sum(normals["precip"], ZERO).quantize(Decimal("0.01"))
+            )
+            normals["sf"].append(sum(normals["sf"], ZERO).quantize(Decimal("0.1")))
     else:
         filepath = BASE_DIR / "static" / "csv" / "HMPN3-Monthly-Climate-Normals.csv"
         with Path(filepath).open() as f:
