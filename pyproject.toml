@@ -91,14 +91,14 @@ select = [
     "ANN",  # flake8-annotations
 ]
 ignore = [
-    "E501", # line too long
-    "C901", # cyclomatic complexity
-    "B006", # data structures for default arguments
-    "D203", # pydocstyle: incompatible with D211
-    "D212", # pydocstyle: incompatible with D213
-    "D104", # pydocstyle: missing docstring in public package
-    "D107", # pydocstyle: missing docstring in __init__
-    "N815", # pep8-naming: legacy mixedCase model fields map to DB columns
+    "line-too-long", # line too long
+    "complex-structure", # cyclomatic complexity
+    "mutable-argument-default", # data structures for default arguments
+    "incorrect-blank-line-before-class", # pydocstyle: incompatible with D211
+    "multi-line-summary-first-line", # pydocstyle: incompatible with D213
+    "undocumented-public-package", # pydocstyle: missing docstring in public package
+    "undocumented-public-init", # pydocstyle: missing docstring in __init__
+    "mixed-case-variable-in-class-scope", # pep8-naming: legacy mixedCase model fields map to DB columns
 ]
 
 [tool.ruff.lint.pydocstyle]
@@ -108,7 +108,7 @@ convention = "google"
 known-first-party = ["api", "boilerplate"]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**/*.py" = ["D", "DOC", "ANN", "ARG", "PERF401", "RUF069", "PT019"]
+"tests/**/*.py" = ["D", "DOC", "ANN", "ARG", "manual-list-comprehension", "float-equality-comparison", "pytest-fixture-param-without-value"]
 "**/tests.py" = ["D", "DOC", "ANN", "ARG"]
 "**/migrations/*.py" = ["D", "ANN"]
 
