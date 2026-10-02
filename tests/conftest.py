@@ -37,9 +37,12 @@ def _test_settings(settings) -> None:
     """Configure Django settings that are awkward under pytest."""
     settings.ALLOWED_HOSTS = ["*", "testserver"]
     settings.DEBUG = True
-    settings.STATICFILES_STORAGE = (
-        "django.contrib.staticfiles.storage.StaticFilesStorage"
-    )
+    settings.STORAGES = {
+        **settings.STORAGES,
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+        },
+    }
 
 
 @pytest.fixture
